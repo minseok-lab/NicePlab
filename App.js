@@ -10,7 +10,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 // 3) 내부 모듈 (Hooks, Constants, Components)
 import { useWeather } from './hooks/useWeather.js';
-import { PLAB_FOOTBALL_URL } from './constants/links.js';
+import { PLAB_FOOTBALL_URL } from './constants';
 import { WeatherInfo, LoadingIndicator, ErrorMessage, Toast } from './components';
 
 // 4) 스타일

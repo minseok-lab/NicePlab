@@ -56,7 +56,7 @@ export const useWeather = () => {
       const results = await Promise.allSettled([
         fetchKmaWeatherData(grid),
         fetchUvIndexData(areaNo),
-        fetchAirQualityData(region.substring(0, 2))
+        fetchAirQualityData(region) // 지역명 전체를 반환합니다.
       ]);
 
       const weatherResult = results[0].status === 'fulfilled' ? results[0].value : null;

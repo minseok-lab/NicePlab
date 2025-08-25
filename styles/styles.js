@@ -79,15 +79,15 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tempText: { // 3) 기온 텍스트
-    fontSize: 42,
+    fontSize: 40,
     fontWeight: '300', // 너무 두껍지 않게
     fontWeight: 'semibold',
     marginRight: 15,
     marginBottom: 5,
   },
   weatherIcon: { // 4)날씨 아이콘 스타일
-    width: 50,   // 너비
-    height: 50,  // 높이
+    width: 45,   // 너비
+    height: 45,  // 높이
     resizeMode: 'contain', // 이미지 비율 유지하며 크기 조정
     marginRight: 15, // 아이콘과 상세 정보 사이의 간격
   },
