@@ -1,7 +1,7 @@
-// api/weatherService.js
+// api/weatherApi.js
 
-const KMA_API_KEY = process.env.EXPO_PUBLIC_KMA_WEATHER_API_KEY;
-const API_BASE_URL = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+// api 호출 경로를 불러옵니다.
+import { API_ENDPOINTS, KMA_WEATHER_API_KEY } from '../constants/links';
 
 // --- Main Export Function ---
 
@@ -89,7 +89,7 @@ function getApiBaseDateTime(dateObj) {
  * @returns {Array|null} - 파싱된 데이터 배열 또는 실패 시 null
  */
 async function fetchAndParseData(grid, baseDate, baseTime) {
-  const requestUrl = `${API_BASE_URL}?serviceKey=${KMA_API_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
+  const requestUrl = `${API_ENDPOINTS.KMA_WEATHER}?serviceKey=${KMA_WEATHER_API_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
 
   let textResponse = '';
   try {

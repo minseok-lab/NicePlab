@@ -1,7 +1,7 @@
 // api/airQualityService.js
 
-const API_KEY = process.env.EXPO_PUBLIC_KMA_AIR_API_KEY;
-const API_BASE_URL = 'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMinuDustFrcstDspth';
+// api 호출 경로를 불러옵니다.
+import { API_ENDPOINTS, AIR_QUALITY_API_KEY } from '../constants/links';
 
 /**
  * 기능: 특정 오염물질(미세/초미세)의 예보 등급을 파싱하는 헬퍼 함수
@@ -20,7 +20,7 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
   const dateString = `${searchDate.getFullYear()}-${String(searchDate.getMonth() + 1).padStart(2, '0')}-${String(searchDate.getDate()).padStart(2, '0')}`;
   // --- ✨ 핵심 수정 부분 끝 ---
 
-  const requestUrl = `${API_BASE_URL}?serviceKey=${API_KEY}&returnType=json&numOfRows=100&pageNo=1&searchDate=${dateString}&InformCode=${informCode}`;
+  const requestUrl = `${API_ENDPOINTS.AIR_QUALITY}?serviceKey=${AIR_QUALITY_API_KEY}&returnType=json&numOfRows=100&pageNo=1&searchDate=${dateString}&InformCode=${informCode}`;
 
   const response = await fetch(requestUrl);
   if (!response.ok) {

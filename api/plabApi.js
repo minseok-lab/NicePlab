@@ -1,11 +1,12 @@
 // api/plabService.js
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_PLAB_API_URL;
-const PLAB_DETAIL_API_BASE_URL = process.env.EXPO_PUBLIC_PLAB_DETAIL_API_URL;
+// api 호출 경로를 불러옵니다.
+import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants/links';
+
 
 async function fetchAllPagesForDate(dateString, regionId) {
   // ... (이 함수는 변경 없음) ...
-  let requestUrl = `${API_BASE_URL}?ordering=schedule&sch=${dateString}&region=${regionId}&page_size=100`;
+  let requestUrl = `${PLAB_API_URL}?ordering=schedule&sch=${dateString}&region=${regionId}&page_size=100`;
   let matchesForDate = [];
 
   while (requestUrl) {
@@ -71,13 +72,9 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
  * @returns {object|null} 'applys' 배열이 포함된 상세 매치 정보 또는 실패 시 null
  */
 export const fetchPlabMatchDetails = async (matchId) => {
-  console.log("--- 상세 매치 정보 요청 ---");
-  console.log("BASE URL:", PLAB_DETAIL_API_BASE_URL);
-  console.log("Match ID:", matchId);
-  // 💡 --- 여기가 수정된 부분입니다 --- 💡
-  // 직접 찾아내신 정확한 API 주소로 교체했습니다.
-  const requestUrl = `${PLAB_DETAIL_API_BASE_URL}${matchId}/`;
-  console.log("최종 요청 주소:", requestUrl);
+
+  const requestUrl = `${PLAB_DETAIL_API_URL}${matchId}/`;
+
   try {
     const response = await fetch(requestUrl);
     if (!response.ok) {

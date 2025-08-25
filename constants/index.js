@@ -1,5 +1,4 @@
 // constants/index.js
-export * from './colors';
 export * from './links';
 export * from './plabLevelTiers';
 export * from './plabRegion';

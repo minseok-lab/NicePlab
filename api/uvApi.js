@@ -1,7 +1,7 @@
-// api/lifeIndexService.js
+// api/uvApi.js
 
-const API_KEY = process.env.EXPO_PUBLIC_KMA_LIFE_API_KEY;
-const API_BASE_URL = 'https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getUVIdxV4';
+// api 호출 경로를 불러옵니다.
+import { API_ENDPOINTS, KMA_UV_API_KEY } from '../constants/links';
 
 /**
  * 기능: 3시간 단위의 UV 데이터를 1시간 단위로 선형 보간합니다.
@@ -60,7 +60,7 @@ export const fetchUvIndexData = async (areaNo = '4117300000') => {
   
   const uvBaseDate = new Date(`${year}-${month}-${day}T${baseHour}:00:00`);
 
-  const requestUrl = `${API_BASE_URL}?serviceKey=${API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&areaNo=${areaNo}&time=${timeString}`;
+  const requestUrl = `${API_ENDPOINTS.KMA_UV}?serviceKey=${KMA_UV_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&areaNo=${areaNo}&time=${timeString}`;
 
   try {
     const response = await fetch(requestUrl);

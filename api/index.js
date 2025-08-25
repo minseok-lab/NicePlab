@@ -1,6 +1,6 @@
 // api/index.js
 
-export * from './weatherService';
-export * from './plabService';
-export * from './airQualityService';
-export * from './lifeIndexService';
+export * from './weatherApi';
+export * from './plabApi';
+export * from './airQualityApi';
+export * from './uvApi';

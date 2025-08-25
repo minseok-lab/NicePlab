@@ -2,8 +2,7 @@
 
 // --- 1. 위치 정보 관련 유틸리티 함수들 ---
 import * as Location from 'expo-location'; // Expo 위치 정보 API
-import { PLAB_REGIONS } from '../constants/plabRegion.js'; // PLAB 지역 그룹 데이터
-import KMA_AREA_CODES from '../constants/kmaAreaCodes.json'; // 기상청 자외선 API 지역 코드를 불러옵니다.
+import { PLAB_REGIONS, KMA_AREA_CODES } from '../constants'; // PLAB 지역 그룹 데이터와 기상청 자외선 API 지역 코드를 불러옵니다.
 
 // --- 2. 좌표 변환(위치 정보 -> 기상청 API)에 필요한 상수들
 function convertGpsToGrid(lat, lon) {

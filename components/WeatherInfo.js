@@ -1,17 +1,28 @@
 // components/WeatherInfo.js
 
+// --- 1. Import Section ---
+// 1) React 및 React Native 핵심 라이브러리
 import { useState, useMemo } from 'react';
 import { ScrollView, View, Text, Button, Linking, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { SvgUri } from 'react-native-svg';
-import { styles } from '../styles/styles';
-import { getBestExerciseTimes } from '../utils/exerciseScorer';
-import { formatWeather } from '../utils/weatherFormatter';
-import { fetchPlabMatchDetails } from '../api/plabService';
-import { getTierFromLevel } from '../utils/plabLevelFormatter';
-import { getLevelBadgeUrl } from '../constants/links';
-import { getScoreColor, getUvColor, getDustColor } from '../utils/colorFormatter';
 
-// --- Helper Functions --- (이전과 동일)
+// 2) 서드파티 라이브러리
+import { SvgUri } from 'react-native-svg';
+
+// 3) API 라이브러리
+import { fetchPlabMatchDetails } from '../api/plabApi';
+
+// 4) 유틸리티 및 상수 라이브러리
+import {
+  getBestExerciseTimes, formatWeather, getTierFromLevel,
+  getScoreColor, getUvColor, getDustColor
+} from '../utils';
+import { getLevelBadgeUrl } from '../constants/links';
+
+// 5) 스타일
+import { styles } from '../styles/styles';
+
+
+// --- Helper Functions ---
 
 const getFallbackGrade = (match) => {
     if (typeof match.grade === 'number' && match.grade > 0) {

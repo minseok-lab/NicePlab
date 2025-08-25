@@ -9,11 +9,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
 // 3) API 호출
-import { fetchKmaWeatherData } from '../api/weatherService';
-import { fetchPlabMatches } from '../api/plabService';
+import { fetchKmaWeatherData, fetchPlabMatches, fetchUvIndexData, fetchAirQualityData } from '../api';
+
+// 4) Utils
 import { getRegionIdFromLocation } from '../utils/locationUtils';
-import { fetchUvIndexData } from '../api/lifeIndexService';
-import { fetchAirQualityData } from '../api/airQualityService';
 
 // 2. 캐시 키(저장소의 파일 이름)를 상수로 정의
 const CACHE_KEYS = {
