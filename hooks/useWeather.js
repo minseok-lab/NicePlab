@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
 // 3) API 호출
-import { fetchKmaWeatherData, fetchPlabMatches, fetchUvIndexData, fetchAirQualityData } from '../api';
+import { fetchKmaWeatherForcast, fetchPlabMatches, fetchUvIndexForcast, fetchAirQualityForcast } from '../api';
 
 // 4) Utils
 import { getRegionIdFromLocation } from '../utils/locationUtils';
@@ -54,9 +54,9 @@ export const useWeather = () => {
       const { regionId, cities, currentCity, areaNo, grid, airQualityRegion } = locationInfo;
 
       const results = await Promise.allSettled([
-        fetchKmaWeatherData(grid),
-        fetchUvIndexData(areaNo),
-        fetchAirQualityData(airQualityRegion) // 지역명 전체를 반환합니다.
+        fetchKmaWeatherForcast(grid),
+        fetchUvIndexForcast(areaNo),
+        fetchAirQualityForcast(airQualityRegion) // 지역명 전체를 반환합니다.
       ]);
 
       const weatherResult = results[0].status === 'fulfilled' ? results[0].value : null;

@@ -38,7 +38,7 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
     
     if (data.response?.body?.items && data.response.body.items.length > 0) {
       
-      const dailyForecast = items.find(item => item.dataTime && item.dataTime.includes('17시'));
+      const dailyForecast = data.response.body.items.find(item => item.dataTime && item.dataTime.includes('17시'));
 
       if (dailyForecast) {
         const grades = dailyForecast.informGrade.split(',').map(s => s.trim());
@@ -60,7 +60,7 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
 /**
  * 기능: 미세먼지와 초미세먼지 예보를 모두 조회합니다.
  */
-export const fetchAirQualityData = async (sidoName = '경기') => {
+export const fetchAirQualityForcast = async (sidoName = '경기') => {
   try {
     const [pm10Grade, pm25Grade] = await Promise.all([
       fetchAndParseGrade('PM10', sidoName),

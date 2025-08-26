@@ -11,7 +11,7 @@ import { API_ENDPOINTS, KMA_WEATHER_API_KEY } from '../constants/links';
  * @param {object} grid - {nx, ny} 좌표
  * @returns {object|null} - 성공 시 { list, city } 객체, 실패 시 null
  */
-export const fetchKmaWeatherData = async (grid) => {
+export const fetchKmaWeatherForcast = async (grid) => {
   const now = new Date();
 
   // 1. 가장 최신 발표 시간을 기준으로 API 요청 시도

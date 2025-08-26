@@ -38,7 +38,7 @@ function interpolateUvData(uvRawData) {
 }
 
 
-export const fetchUvIndexData = async (areaNo = '4117300000') => { 
+export const fetchUvIndexForcast = async (areaNo = '4117300000') => { 
   const now = new Date();
   let baseDate = new Date();
   let baseHour = '';

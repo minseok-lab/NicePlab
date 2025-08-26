@@ -1,5 +1,5 @@
 // exerciseCalculator.js
-import { weights, exclusionConditions } from '../../config/exerciseScoreCriteria.js';
+import { weights, exclusionConditions } from '../../configs/exerciseScoreCriteria.js';
 import { scoringRules } from './scoringRules.js';
 
 /**
