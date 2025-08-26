@@ -3,6 +3,7 @@
 // --- 1. 위치 정보 관련 유틸리티 함수들 ---
 import * as Location from 'expo-location'; // Expo 위치 정보 API
 import { PLAB_REGIONS, KMA_AREA_CODES } from '../constants'; // PLAB 지역 그룹 데이터와 기상청 자외선 API 지역 코드를 불러옵니다.
+import { GYEONGGI_BUKBU_CITIES } from '../constants/gyeonggiRegions';
 
 // --- 2. 좌표 변환(위치 정보 -> 기상청 API)에 필요한 상수들
 function convertGpsToGrid(lat, lon) {
@@ -107,6 +108,15 @@ export const getRegionIdFromLocation = async () => {
 
       if (region && currentCity) {
         // [2] '서울' vs '서울특별시' 와 같은 축약/전체 이름 및 '대전/세종' 같은 복합 이름을 모두 처리
+
+        // '경기도'일 경우, city 이름을 기준으로 '경기북부'와 '경기남부'를 구분합니다.
+        let airQualityRegion = region; // 기본값은 '경기도', '충청남도' 등 전체 지역명
+        if (region === '경기도') {
+          airQualityRegion = GYEONGGI_BUKBU_CITIES.includes(city)
+            ? '경기북부'
+            : '경기남부';
+        }
+
         const foundGroup = PLAB_REGIONS.find(group => 
             group.area_group_name.split('/').some(name => region.startsWith(name.trim()))
         );
@@ -129,6 +139,7 @@ export const getRegionIdFromLocation = async () => {
               cities: citiesInArea, // 해당 지역 그룹에 속한 도시 목록
               currentCity: currentCity, // 현재 사용자의 도시
               region: region, // 현재 사용자의 지역(시/도)
+              airQualityRegion: airQualityRegion,
               areaNo: areaNo, // 가장 가까운 행정구역코드
               grid: grid // 격자 좌표
             };

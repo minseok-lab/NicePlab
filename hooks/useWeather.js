@@ -51,12 +51,12 @@ export const useWeather = () => {
       const currentLocation = await Location.getCurrentPositionAsync({});
       const locationInfo = await getRegionIdFromLocation(currentLocation);
       if (!locationInfo) throw new Error('현재 위치의 지역 정보를 찾을 수 없습니다.');
-      const { regionId, cities, currentCity, region, areaNo, grid } = locationInfo;
+      const { regionId, cities, currentCity, areaNo, grid, airQualityRegion } = locationInfo;
 
       const results = await Promise.allSettled([
         fetchKmaWeatherData(grid),
         fetchUvIndexData(areaNo),
-        fetchAirQualityData(region) // 지역명 전체를 반환합니다.
+        fetchAirQualityData(airQualityRegion) // 지역명 전체를 반환합니다.
       ]);
 
       const weatherResult = results[0].status === 'fulfilled' ? results[0].value : null;
