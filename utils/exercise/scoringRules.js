@@ -1,5 +1,5 @@
 // exerciseScoringRules.js
-import { humidityThresholds, windSpeedThresholds, airQualityGradeMap } from '../../config/exerciseScoreCriteria.js';
+import { humidityThresholds, windSpeedThresholds, airQualityGradeMap } from '../../configs/exerciseScoreCriteria.js';
 
 // --- 핵심 점수 계산 헬퍼 함수들 ---
 

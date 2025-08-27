@@ -3,60 +3,25 @@
 // --- 1. Import Section ---
 // 1) React 및 React Native 핵심 라이브러리
 import { useState, useMemo } from 'react';
-import { ScrollView, View, Text, Button, Linking, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react-native';
 
-// 2) 서드파티 라이브러리
-import { SvgUri } from 'react-native-svg';
-
-// 3) API 라이브러리
+// 2) API 라이브러리
 import { fetchPlabMatchDetails } from '../api/plabApi';
 
-// 4) 유틸리티 및 상수 라이브러리
-import {
-  getBestExerciseTimes, formatWeather, getTierFromLevel,
-  getScoreColor, getUvColor, getDustColor
-} from '../utils';
-import { getLevelBadgeUrl } from '../constants/links';
+// 3) 유틸리티 및 상수 라이브러리
+import { getBestExerciseTimes } from '../utils';
 
-// 5) 스타일
+// 4) 스타일
 import { styles } from '../styles/styles';
 
-
-// --- Helper Functions ---
-
-const getFallbackGrade = (match) => {
-    if (typeof match.grade === 'number' && match.grade > 0) {
-        return `[${match.grade.toFixed(1)}]`;
-    }
-    return null;
-};
-
-const getAverageLevelInfo = (match) => {
-    if (match.confirm_cnt === 0) return '루키';
-    if (!match.applys || !Array.isArray(match.applys) || match.applys.length === 0) {
-        return getFallbackGrade(match) || '[정보 없음]';
-    }
-    const levelStats = match.applys.reduce((stats, participant) => {
-        if (participant.status !== 'CONFIRM') return stats;
-        let level = null;
-        if (participant.profile_level?.tier_ko === '루키') level = 2.4;
-        else if (participant.level !== null && !isNaN(parseFloat(participant.level))) level = parseFloat(participant.level);
-        if (level !== null) {
-            stats.sum += level;
-            stats.count++;
-        }
-        return stats;
-    }, { sum: 0, count: 0 });
-
-    if (levelStats.count === 0) return getFallbackGrade(match) || '[정보 없음]';
-    const averageLevel = levelStats.sum / levelStats.count;
-    return `[${averageLevel.toFixed(1)}]`;
-};
+// 5) 컴포넌트
+import WeatherCard from './WeatherCard';
+import MatchDetails from './MatchDetails';
 
 
 // --- Main Component ---
-
 const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime }) => {
+
   // --- State ---
   const [expandedTimestamp, setExpandedTimestamp] = useState(null); // ✨ [정의명 통일] 펼쳐진 카드의 timestamp
   const [detailedMatches, setDetailedMatches] = useState({}); // 시간대별 상세 매치 정보
@@ -136,121 +101,35 @@ const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime }
     }
   };
 
-  // --- Render ---
-
-  // --- 🎨 여기가 UI 렌더링 부분입니다 ---
+  // --- Render (✨ 매우 간결해진 렌더링 로직) ---
   return (
     <ScrollView>
       <Text style={styles.subHeader}>{weatherData.city.name} 추천 시간대</Text>
       
       {finalBestTimes.length > 0 ? (
         finalBestTimes.map((weatherItem) => {
-          // 필요한 데이터를 구조 분해 할당으로 추출합니다.
-          const { dt: timestamp, totalScore, temp, sky, pty, humidity, uvIndex, pm10Value, pm25Value } = weatherItem;
-          
-          const date = new Date(timestamp * 1000);
-          const timeStr = `${date.getMonth() + 1}월 ${date.getDate()}일 ${date.getHours()}시`;
-          const weather = formatWeather(sky, pty);
+          const { dt: timestamp } = weatherItem;
           const isExpanded = expandedTimestamp === timestamp;
           const isLoading = loadingTimestamps.has(timestamp);
           const matchesForThisSlot = detailedMatches[timestamp] || matchesByTimestamp.get(timestamp) || [];
 
-          // UV 지수와 미세먼지 값이 유효한 숫자인지 확인합니다.
-          const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
-          const validPm10 = typeof pm10Value === 'number' ? pm10Value : 0;
-          const validPm25 = typeof pm25Value === 'number' ? pm25Value : 0;
-
           return (
-            // TouchableOpacity가 카드의 역할을 합니다.
+            // TouchableOpacity가 카드 전체를 감싸고, 클릭 이벤트를 관리합니다.
             <TouchableOpacity 
               key={timestamp} 
               style={styles.card}
               onPress={() => handleToggleCard(timestamp)}
               activeOpacity={0.8}
             >
-              {/* ✨ 상단: 날짜와 점수 (WeatherCard 구조 적용) ✨ */}
-              <View style={styles.cardHeader}>
-                <Text style={styles.dateText}> {timeStr}</Text>
-                <View style={[styles.scoreBox, { backgroundColor: getScoreColor(totalScore) }]}>
-                  <Text style={styles.scoreText}>{totalScore.toFixed(1)}</Text>
-                </View>
-              </View>
-
-              {/* ✨ 하단: 날씨 정보 (WeatherCard 구조 적용) ✨ */}
-              <View style={styles.weatherContent}>
-                {/* 1. 기온 */}
-                <View style={styles.weatherColumn}>
-                  <Text style={styles.tempText}>{Math.round(temp)}°</Text>
-                </View>
-                
-                {/* 2. 날씨 아이콘 */}
-                <Image 
-                  source={weather.icon} 
-                  style={styles.weatherIcon} 
-                />
-
-                {/* 3 & 4. 상세 정보 (습도, UV, 미세먼지 등) */}
-                <View style={styles.detailsContainer}>
-                  <View style={styles.detailLabels}>
-                    <Text style={styles.detailLabelsText}>습도</Text>
-                    <Text style={styles.detailLabelsText}>UV</Text>
-                    <Text style={styles.detailLabelsText}>미세먼지</Text>
-                    <Text style={styles.detailLabelsText}>초미세먼지</Text>
-                  </View>
-                  <View style={styles.detailValues}>
-                    <Text style={styles.detailValuesText}>{humidity}%</Text>
-                    <Text style={[styles.detailValuesText, { color: getUvColor(validUvIndex) }]}>{validUvIndex}</Text>
-                    {/* 미세먼지 등급과 색상 적용 */}
-                    <Text style={[styles.detailValuesText, { color: getDustColor(weatherItem.pm10Grade) }]}>
-                        {weatherItem.pm10Grade || '정보없음'}
-                    </Text>
-                    {/* 초미세먼지 등급과 색상 적용 */}
-                    <Text style={[styles.detailValuesText, { color: getDustColor(weatherItem.pm25Grade) }]}>
-                        {weatherItem.pm25Grade || '정보없음'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-
-              {/* 펼쳤을 때 보이는 매치 목록 */}
+              {/* 1. 날씨 정보 렌더링은 WeatherCard에 위임 */}
+              <WeatherCard weatherItem={weatherItem} />
+              
+              {/* 2. 펼쳐졌을 때, 매치 정보 렌더링은 MatchDetails에 위임 */}
               {isExpanded && (
-                <View style={styles.matchListContainer}>
-                  {isLoading ? (
-                    <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 10 }} />
-                  ) : (
-                    matchesForThisSlot.length > 0 ? (
-                      matchesForThisSlot.map(match => {
-                          const averageLevelInfo = getAverageLevelInfo(match);
-                          const tierInfo = getTierFromLevel(averageLevelInfo);
-                          const badgeUrl = getLevelBadgeUrl(tierInfo.en_name);
-
-                          return (
-                            <TouchableOpacity 
-                              key={match.id}
-                              onPress={() => Linking.openURL(`https://www.plabfootball.com/match/${match.id}/`)}
-                            >
-                              <Text style={[styles.matchInfoText, styles.matchLink]}>
-                                {`⚽ ${match.label_title}`}
-                              </Text>
-                              <View style={styles.matchDetailsContainer}>
-                                {badgeUrl ? (
-                                  <SvgUri width="18" height="18" uri={badgeUrl} style={{ marginRight: 6 }} />
-                                ) : (
-                                  <Text style={{ marginRight: 6 }}>📊</Text>
-                                )}
-                                <Text style={styles.matchDetailsText}>
-                                  {`평균 레벨: ${tierInfo.name}   [ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                      })
-                    ) : (
-                      <Text style={styles.noMatchText}>✅ 날씨는 최적이지만, 신청 가능한 매치가 없어요!</Text>
-                    )
-                  )}
-                </View>
+                <MatchDetails 
+                  isLoading={isLoading}
+                  matches={matchesForThisSlot}
+                />
               )}
             </TouchableOpacity>
           );

@@ -1,43 +1,19 @@
 // api/uvApi.js
 
-// api 호출 경로를 불러옵니다.
+// --- 1. Import Section ---
+// 1) api 호출 경로를 불러옵니다.
+import { apiClient } from './apiClient';
+
+// 2) 내부 모듈 (Constants, Utils)
 import { API_ENDPOINTS, KMA_UV_API_KEY } from '../constants/links';
+import { interpolateUvData } from '../utils/uvForcastDataParser';
+
 
 /**
- * 기능: 3시간 단위의 UV 데이터를 1시간 단위로 선형 보간합니다.
- * @param {Object} uvRawData - API 원본 응답의 item[0] 객체
- * @returns {Object} - 시간(h)을 키로, 보간된 UV 지수를 값으로 갖는 객체
+ * 기능: 특정 지역의 자외선 지수 예보를 기상청 API를 통해 가져옵니다.
+ * @param {string} areaNo - 지역번호 (기본값: 안양시)
+ * @returns {Promise<Object|null>} - 시간별 UV 지수와 기준 시간을 포함하는 객체 또는 실패 시 null
  */
-function interpolateUvData(uvRawData) {
-  const hourlyUv = {};
-  for (let i = 0; i <= 72; i += 3) {
-    const startKey = `h${i}`;
-    const endKey = `h${i + 3}`;
-
-    const startVal = parseFloat(uvRawData[startKey]);
-    const endVal = parseFloat(uvRawData[endKey]);
-
-    // 시작값이 유효한 숫자인지 먼저 확인
-    if (!isNaN(startVal)) {
-      hourlyUv[i] = startVal;
-
-      // 끝값도 유효하다면, 그 사이를 보간합니다.
-      if (!isNaN(endVal)) {
-        const difference = endVal - startVal;
-        const step = difference / 3.0;
-        hourlyUv[i + 1] = parseFloat((startVal + step).toFixed(2));
-        hourlyUv[i + 2] = parseFloat((startVal + step * 2).toFixed(2));
-      } else {
-        // 끝값이 유효하지 않다면, 시작값으로 이후 2시간을 채웁니다.
-        hourlyUv[i + 1] = startVal;
-        hourlyUv[i + 2] = startVal;
-      }
-    }
-  }
-  return hourlyUv;
-}
-
-
 export const fetchUvIndexForcast = async (areaNo = '4117300000') => { 
   const now = new Date();
   let baseDate = new Date();
@@ -59,30 +35,19 @@ export const fetchUvIndexForcast = async (areaNo = '4117300000') => {
   const timeString = `${year}${month}${day}${baseHour}`;
   
   const uvBaseDate = new Date(`${year}-${month}-${day}T${baseHour}:00:00`);
-
+  console.log(`[자외선 API] ➡️ 요청 시작: Time=${timeString}`);
   const requestUrl = `${API_ENDPOINTS.KMA_UV}?serviceKey=${KMA_UV_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&areaNo=${areaNo}&time=${timeString}`;
 
-  try {
-    const response = await fetch(requestUrl);
-    // ❗ response.ok가 아닐 때도 에러를 던지도록 수정
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const textResponse = await response.text();
-    const data = JSON.parse(textResponse);
-    
-    if (data.response?.body?.items?.item) {
-      const uvData = data.response.body.items.item[0];
-      const interpolatedData = interpolateUvData(uvData);
-      
-      return { hourlyUv: interpolatedData, uvBaseDate: uvBaseDate };
-    } else {
-      console.error("자외선 API 데이터 없음:", textResponse);
-      return null;
-    }
-  } catch (error) {
-    // ❗ 실패 시 에러를 더 자세하게 출력
-    console.error("❌ 자외선 API fetch 실패:", error);
+  const data = await apiClient(requestUrl, '자외선 지수');
+  
+  if (data?.response?.body?.items?.item) {
+    console.log(`[자외선 API] ✅ 요청 성공: ${timeString} 데이터 수신 완료.`);
+    const uvData = data.response.body.items.item[0];
+    const interpolatedData = interpolateUvData(uvData);
+
+    return { hourlyUv: interpolatedData, uvBaseDate: uvBaseDate };
+  } else {
+    console.error("자외선 API 데이터가 없거나 형식이 올바르지 않습니다.");
     return null;
   }
 };

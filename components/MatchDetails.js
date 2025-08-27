@@ -1,15 +1,12 @@
-/*
-
 // components/MatchDetails.js
-import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+
+import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 import { styles } from '../styles/styles';
-import { fetchPlabMatchDetails } from '../api';
 import { getTierFromLevel } from '../utils';
-import { getLevelBadgeUrl } from '../constants';
+import { getLevelBadgeUrl } from '../constants/links';
 
-// Helper functions
+// --- Helper Functions ---
 const getFallbackGrade = (match) => {
     if (typeof match.grade === 'number' && match.grade > 0) {
         return `[${match.grade.toFixed(1)}]`;
@@ -39,44 +36,30 @@ const getAverageLevelInfo = (match) => {
     return `[${averageLevel.toFixed(1)}]`;
 };
 
-export const MatchDetails = ({ matches }) => {
-  const [detailedMatches, setDetailedMatches] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDetails = async () => {
-      if (matches.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-      
-      setIsLoading(true);
-      try {
-        const detailPromises = matches.map(match => fetchPlabMatchDetails(match.id));
-        const results = await Promise.all(detailPromises);
-        setDetailedMatches(results.filter(Boolean));
-      } catch (error) {
-        console.error("Failed to fetch match details:", error);
-        setDetailedMatches([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [matches]);
-
+/**
+ * 펼쳐진 카드에 표시될 매치 상세 정보 목록입니다.
+ * @param {boolean} isLoading - 상세 정보를 로딩 중인지 여부
+ * @param {Array} matches - 표시할 매치 목록
+ */
+const MatchDetails = ({ isLoading, matches }) => {
+  // 1. 로딩 중일 경우 ActivityIndicator를 표시합니다.
   if (isLoading) {
     return <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 10 }} />;
   }
 
-  if (detailedMatches.length === 0) {
-    return <Text style={styles.noMatchText}>✅ 날씨는 최적이지만, 신청 가능한 매치가 없어요!</Text>;
+  // 2. 매치가 없을 경우 안내 문구를 표시합니다.
+  if (matches.length === 0) {
+    return (
+      <View style={styles.matchListContainer}>
+        <Text style={styles.noMatchText}>✅ 날씨는 최적이지만, 신청 가능한 매치가 없어요!</Text>
+      </View>
+    );
   }
-
+  
+  // 3. 매치 목록을 렌더링합니다.
   return (
     <View style={styles.matchListContainer}>
-      {detailedMatches.map(match => {
+      {matches.map(match => {
         const averageLevelInfo = getAverageLevelInfo(match);
         const tierInfo = getTierFromLevel(averageLevelInfo);
         const badgeUrl = getLevelBadgeUrl(tierInfo.en_name);
@@ -84,6 +67,7 @@ export const MatchDetails = ({ matches }) => {
         return (
           <TouchableOpacity 
             key={match.id}
+            style={styles.matchItemContainer}
             onPress={() => Linking.openURL(`https://www.plabfootball.com/match/${match.id}/`)}
           >
             <Text style={[styles.matchInfoText, styles.matchLink]}>
@@ -96,7 +80,7 @@ export const MatchDetails = ({ matches }) => {
                 <Text style={{ marginRight: 6 }}>📊</Text>
               )}
               <Text style={styles.matchDetailsText}>
-                {`평균 레벨: ${tierInfo.name}   [ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
+                {`평균 레벨: ${tierInfo.name}  [ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
               </Text>
             </View>
           </TouchableOpacity>
@@ -106,4 +90,4 @@ export const MatchDetails = ({ matches }) => {
   );
 };
 
-*/
+export default MatchDetails;

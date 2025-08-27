@@ -51,8 +51,8 @@ export const windSpeedThresholds = [
  * ✨ Key Improvement: if-else 문을 데이터 기반 구조로 변경하여 가독성과 유지보수성을 높였습니다.
  */
 export const humidityThresholds = [
-    { maxHumidity: 25, score: 20 },
-    { maxHumidity: 35, score: 65 },
+    { maxHumidity: 25, score: 50 },
+    { maxHumidity: 35, score: 70 },
     { maxHumidity: 45, score: 90 },
     { maxHumidity: 55, score: 100 }, // 최적 구간
     { maxHumidity: 65, score: 80 },

@@ -1,144 +1,197 @@
 // hooks/useWeather.js
 
 // --- 1. Import Section ---
-// 1) React 및 React Native 핵심 라이브러리
+// 1) React 라이브러리
 import { useState, useEffect, useCallback } from 'react';
 
 // 2) 서드파티 라이브러리
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
 
-// 3) API 호출
+// 3) api 호출 경로를 불러옵니다.
 import { fetchKmaWeatherForcast, fetchPlabMatches, fetchUvIndexForcast, fetchAirQualityForcast } from '../api';
 
-// 4) Utils
-import { getRegionIdFromLocation } from '../utils/locationUtils';
+// 4) 리팩토링한 유틸리티 함수들을 가져옵니다.
+import { getRegionIdFromLocation, getDefaultRegionInfo } from '../utils/locationUtils';
 
-// 2. 캐시 키(저장소의 파일 이름)를 상수로 정의
+// --- 2. Constants ---
 const CACHE_KEYS = {
-  WEATHER: 'cachedWeatherData',
-  PLAB: 'cachedPlabMatches',
-  LAST_UPDATE: 'cachedLastUpdateTime',
+    WEATHER: 'cachedWeatherData',
+    PLAB: 'cachedPlabMatches',
+    LAST_UPDATE: 'cachedLastUpdateTime',
 };
 
-export const useWeather = () => {
-  const [weatherData, setWeatherData] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [plabMatches, setPlabMatches] = useState([]);
-  const [lastUpdateTime, setLastUpdateTime] = useState(null);
-  const [uvBaseDate, setUvBaseDate] = useState(null);
-  const [toastMessage, setToastMessage] = useState(null);
+// --- 3. Helper Functions inside the Hook ---
 
-  const loadAllData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setToastMessage(null);
+/**
+ * AsyncStorage에서 캐시 데이터를 불러와 상태를 업데이트합니다.
+ * @returns {Promise<{weather: object|null, plab: any[]|null, time: string|null}>} 캐시된 데이터 객체
+ */
+const loadCache = async (setWeatherData, setPlabMatches, setLastUpdateTime) => {
+    const [[, weatherJSON], [, plabJSON], [, time]] = await AsyncStorage.multiGet([
+        CACHE_KEYS.WEATHER,
+        CACHE_KEYS.PLAB,
+        CACHE_KEYS.LAST_UPDATE,
+    ]);
 
-      const cachedWeatherJSON = await AsyncStorage.getItem(CACHE_KEYS.WEATHER);
-      const cachedWeather = cachedWeatherJSON ? JSON.parse(cachedWeatherJSON) : null;
-      const cachedPlabJSON = await AsyncStorage.getItem(CACHE_KEYS.PLAB);
-      const cachedPlab = cachedPlabJSON ? JSON.parse(cachedPlabJSON) : null;
-      const cachedTime = await AsyncStorage.getItem(CACHE_KEYS.LAST_UPDATE);
+    const weather = weatherJSON ? JSON.parse(weatherJSON) : null;
+    const plab = plabJSON ? JSON.parse(plabJSON) : [];
 
-      if (cachedWeather) setWeatherData(cachedWeather);
-      if (cachedPlab) setPlabMatches(cachedPlab);
-      if (cachedTime) setLastUpdateTime(cachedTime);
+    if (weather) setWeatherData(weather);
+    if (plab) setPlabMatches(plab);
+    if (time) setLastUpdateTime(time);
+    
+    return { weather, plab, time };
+};
 
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') throw new Error('위치 권한이 거부되었습니다.');
-      
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      const locationInfo = await getRegionIdFromLocation(currentLocation);
-      if (!locationInfo) throw new Error('현재 위치의 지역 정보를 찾을 수 없습니다.');
-      const { regionId, cities, currentCity, areaNo, grid, airQualityRegion } = locationInfo;
-
-      const results = await Promise.allSettled([
+/**
+ * 날씨 관련 API(기상청, 자외선, 미세먼지)를 병렬로 호출합니다.
+ * @param {object} locationInfo - getRegionIdFromLocation에서 반환된 지역 정보
+ * @returns {Promise<{weatherResult: object|null, uvResult: object|null, airResult: object|null}>} API 호출 결과
+ */
+const fetchWeatherDataApis = async (locationInfo) => {
+    const { grid, areaNo, airQualityRegion } = locationInfo;
+    const results = await Promise.allSettled([
         fetchKmaWeatherForcast(grid),
         fetchUvIndexForcast(areaNo),
-        fetchAirQualityForcast(airQualityRegion) // 지역명 전체를 반환합니다.
-      ]);
+        fetchAirQualityForcast(airQualityRegion),
+    ]);
 
-      const weatherResult = results[0].status === 'fulfilled' ? results[0].value : null;
-      const uvResult = results[1].status === 'fulfilled' ? results[1].value : null;
-      const airResult = results[2].status === 'fulfilled' ? results[2].value : null;
+    return {
+        weatherResult: results[0].status === 'fulfilled' ? results[0].value : null,
+        uvResult: results[1].status === 'fulfilled' ? results[1].value : null,
+        airResult: results[2].status === 'fulfilled' ? results[2].value : null,
+    };
+};
 
-      if (!weatherResult) {
-        setToastMessage(`날씨 정보를 불러오지 못했습니다. 최근 업데이트: ${cachedTime || '없음'}`);
-      } else {
-        if (!uvResult) setToastMessage(`자외선 정보를 불러오지 못했습니다. 최근 업데이트: ${cachedTime || '없음'}`);
-        if (!airResult) setToastMessage(`미세먼지 정보를 불러오지 못했습니다. 최근 업데이트: ${cachedTime || '없음'}`);
-
-        const mergedList = weatherResult.list.map(hourlyData => {
-            const weatherItemDate = new Date(hourlyData.dt * 1000);
-            
-            // --- 💡 핵심 수정 부분: UV 지수 처리 로직을 더 명확하게 변경 ---
-            let uvIndexToUse = '정보없음';
-
-            if (uvResult) { // 자외선 API 호출에 성공했을 경우
-                const hourOffset = Math.round((weatherItemDate.getTime() - uvResult.uvBaseDate.getTime()) / (1000 * 60 * 60));
-                
-                // 1. 현재 시간대의 UV 지수를 찾아봅니다.
-                let foundUv = (hourOffset >= 0 && hourOffset <= 72) ? uvResult.hourlyUv[hourOffset] : null;
-
-                // 2. 현재 시간대 UV 지수가 없으면, 24시간 전 데이터를 찾아봅니다.
-                if (foundUv == null) {
-                    const fallbackHourOffset = hourOffset - 24;
-                    foundUv = (fallbackHourOffset >= 0 && fallbackHourOffset <= 72) ? uvResult.hourlyUv[fallbackHourOffset] : null;
-                }
-
-                // 3. 유효한 값을 찾았다면 할당합니다.
-                if (foundUv != null) {
-                    uvIndexToUse = foundUv;
-                }
-
-            } else if (cachedWeather) { // 자외선 API 호출에 실패했고, 캐시 데이터가 있을 경우
-                const cachedItem = cachedWeather.list.find(item => item.dt === hourlyData.dt);
-                if (cachedItem && cachedItem.uvIndex != null) {
-                    uvIndexToUse = cachedItem.uvIndex;
-                }
-            }
-
-            const pm10Grade = airResult ? airResult.pm10 : (cachedWeather?.list.find(item => item.dt === hourlyData.dt)?.pm10Grade || '정보없음');
-            const pm25Grade = airResult ? airResult.pm25 : (cachedWeather?.list.find(item => item.dt === hourlyData.dt)?.pm25Grade || '정보없음');
-
-            return {
-              ...hourlyData,
-              uvIndex: uvIndexToUse,
-              pm10Grade: pm10Grade,
-              pm25Grade: pm25Grade,
-            };
-        });
+/**
+ * 날씨, 자외선, 미세먼지 데이터를 시간대별로 병합합니다.
+ * @param {object} weatherResult - 기상청 날씨 API 결과
+ * @param {object} uvResult - 자외선 지수 API 결과
+ * @param {object} airResult - 미세먼지 API 결과
+ * @param {object} cachedWeather - 캐시된 날씨 데이터 (fallback용)
+ * @returns {Array} 병합된 시간별 날씨 데이터 리스트
+ */
+const mergeAllWeatherData = (weatherResult, uvResult, airResult, cachedWeather) => {
+    return weatherResult.list.map(hourlyData => {
+        const weatherItemDate = new Date(hourlyData.dt * 1000);
         
-        weatherResult.list = mergedList;
-        if (currentCity) weatherResult.city.name = currentCity;
-        setWeatherData(weatherResult);
-        if (uvResult) setUvBaseDate(uvResult.uvBaseDate);
-
-        const matchesResult = await fetchPlabMatches(weatherResult.list, regionId, cities);
-        if (matchesResult) {
-            setPlabMatches(matchesResult);
-            await AsyncStorage.setItem(CACHE_KEYS.PLAB, JSON.stringify(matchesResult));
-        } else {
-            setToastMessage(`플랩 매치 정보를 불러오지 못했습니다. 최근 업데이트: ${cachedTime || '없음'}`);
+        // UV 지수 처리
+        let uvIndexToUse = '정보없음';
+        if (uvResult) {
+            const hourOffset = Math.round((weatherItemDate.getTime() - uvResult.uvBaseDate.getTime()) / (1000 * 60 * 60));
+            let foundUv = (hourOffset >= 0 && hourOffset < uvResult.hourlyUv.length) ? uvResult.hourlyUv[hourOffset] : null;
+            if (foundUv != null) uvIndexToUse = foundUv;
+        } else if (cachedWeather) {
+            const cachedItem = cachedWeather.list.find(item => item.dt === hourlyData.dt);
+            if (cachedItem?.uvIndex != null) uvIndexToUse = cachedItem.uvIndex;
         }
 
-        const now = new Date();
-        const newUpdateTime = `${now.getMonth() + 1}.${now.getDate()}. ${now.getHours() >= 12 ? '오후' : '오전'} ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, '0')}`;
-        setLastUpdateTime(newUpdateTime);
-        await AsyncStorage.setItem(CACHE_KEYS.WEATHER, JSON.stringify(weatherResult));
-        await AsyncStorage.setItem(CACHE_KEYS.LAST_UPDATE, newUpdateTime);
-      }
-    } catch (err) {
-      setErrorMsg(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        // 미세먼지 처리
+        const getFallbackGrade = (gradeType) => cachedWeather?.list.find(item => item.dt === hourlyData.dt)?.[gradeType] || '정보없음';
+        const pm10Grade = airResult ? airResult.pm10 : getFallbackGrade('pm10Grade');
+        const pm25Grade = airResult ? airResult.pm25 : getFallbackGrade('pm25Grade');
 
-  useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+        return {
+            ...hourlyData,
+            uvIndex: uvIndexToUse,
+            pm10Grade,
+            pm25Grade,
+        };
+    });
+};
 
-  return { weatherData, errorMsg, isLoading, plabMatches, lastUpdateTime, uvBaseDate, refetch: loadAllData, toastMessage, clearToast: () => setToastMessage(null) };
+/**
+ * 새로운 데이터와 업데이트 시간을 AsyncStorage에 저장합니다.
+ */
+const updateCache = async (weatherData, plabMatches, setLastUpdateTime) => {
+    const now = new Date();
+    const newUpdateTime = `${now.getMonth() + 1}.${now.getDate()}. ${now.getHours() >= 12 ? '오후' : '오전'} ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    await AsyncStorage.multiSet([
+        [CACHE_KEYS.WEATHER, JSON.stringify(weatherData)],
+        [CACHE_KEYS.PLAB, JSON.stringify(plabMatches)],
+        [CACHE_KEYS.LAST_UPDATE, newUpdateTime],
+    ]);
+
+    setLastUpdateTime(newUpdateTime);
+};
+
+
+// --- 4. Main useWeather Hook ---
+export const useWeather = () => {
+    const [weatherData, setWeatherData] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [plabMatches, setPlabMatches] = useState([]);
+    const [lastUpdateTime, setLastUpdateTime] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null);
+
+    const loadAllData = useCallback(async () => {
+        setIsLoading(true);
+        setToastMessage(null);
+        
+        try {
+            // 1) 캐시에서 데이터 우선 로드 (UI 즉시 반응)
+            const cached = await loadCache(setWeatherData, setPlabMatches, setLastUpdateTime);
+            
+            // 2) 리팩토링된 함수를 사용하여 위치 정보 가져오기
+            let locationInfo = await getRegionIdFromLocation();
+            if (!locationInfo) {
+                locationInfo = getDefaultRegionInfo(); // 실패 시 기본값 사용
+                setToastMessage('위치 정보를 찾을 수 없어 기본 지역으로 표시합니다.');
+            }
+
+            // 3) 원격 API에서 최신 데이터 가져오기
+            const { weatherResult, uvResult, airResult } = await fetchWeatherDataApis(locationInfo);
+            
+            // 4) 핵심 날씨 정보 로드 실패 시, 캐시 데이터를 보여주며 에러 처리
+            if (!weatherResult) {
+                setToastMessage(`날씨 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
+                throw new Error('Failed to fetch essential weather data.');
+            }
+            
+            // 5) 모든 데이터를 병합하여 최종 날씨 객체 생성
+            const mergedList = mergeAllWeatherData(weatherResult, uvResult, airResult, cached.weather);
+            const finalWeatherData = {
+                ...weatherResult,
+                city: { ...weatherResult.city, name: locationInfo.currentCity },
+                list: mergedList,
+            };
+            setWeatherData(finalWeatherData);
+            
+            // 6) 플랩 매치 정보 업데이트
+            const newPlabMatches = await fetchPlabMatches(finalWeatherData.list, locationInfo.regionId, locationInfo.cities);
+            if (newPlabMatches) {
+                setPlabMatches(newPlabMatches);
+            } else {
+                setToastMessage(`플랩 매치 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
+                // 플랩 매치 실패는 전체 로직을 중단시키지 않음. 기존 캐시 데이터 유지.
+            }
+            
+            // 7) 성공적으로 가져온 최신 데이터를 캐시에 저장
+            await updateCache(finalWeatherData, newPlabMatches || cached.plab, setLastUpdateTime);
+
+        } catch (err) {
+            // 위치 권한 거부, 네트워크 에러 등 모든 에러 처리
+            setErrorMsg(err.message);
+            console.error(err); // 개발자 확인용 에러 로그
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadAllData();
+    }, [loadAllData]);
+
+    return { 
+        weatherData, 
+        errorMsg, 
+        isLoading, 
+        plabMatches, 
+        lastUpdateTime, 
+        refetch: loadAllData, 
+        toastMessage, 
+        clearToast: () => setToastMessage(null) 
+    };
 };

@@ -1,7 +1,12 @@
 // api/plabService.js
 
-// api 호출 경로를 불러옵니다.
+// --- 1. Import Section ---
+// 1) api 호출 경로를 불러옵니다.
+import { apiClient } from './apiClient';
+
+// 2) 내부 모듈 (contsants)
 import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants/links';
+
 
 
 async function fetchAllPagesForDate(dateString, regionId) {
@@ -10,14 +15,17 @@ async function fetchAllPagesForDate(dateString, regionId) {
   let matchesForDate = [];
 
   while (requestUrl) {
-    const response = await fetch(requestUrl);
-    if (!response.ok) {
-      console.warn(`Warning: Failed to fetch data for date ${dateString}. Status: ${response.status}`);
-      return [];
+    // ✨ apiClient가 fetch와 기본 에러 처리를 담당합니다.
+    const data = await apiClient(requestUrl, '플랩 매치 목록');
+
+    // 데이터 로드에 실패하면 루프를 중단합니다.
+    if (!data) {
+      console.warn(`Warning: ${dateString} 날짜의 플랩 매치 페이지를 가져오지 못했습니다.`);
+      break; 
     }
-    const data = await response.json();
+    
     matchesForDate = matchesForDate.concat(data.results);
-    requestUrl = data.next;
+    requestUrl = data.next; // 다음 페이지 URL로 업데이트
   }
   return matchesForDate;
 }

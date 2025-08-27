@@ -1,12 +1,13 @@
 // styles/styles.js
 
+// 1) React 및 React Native 핵심 라이브러리
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   // --- 1. 전체 컨테이너 및 기본 스타일 ---
   container: { // 1) 전체 화면 컨테이너
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 48,
     paddingHorizontal: 20,
     backgroundColor: '#fdfdfd',
   },
@@ -17,9 +18,9 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   subHeader: { // 3) 서브 헤더 스타일
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    marginVertical: 10,
+    marginVertical: 12,
     textAlign: 'left',
   },
   loadingContainer: { // 4) 로딩 인디케이터 컨테이너
@@ -29,7 +30,7 @@ export const styles = StyleSheet.create({
   },
   card: { // 5) 날씨 정보 카드 스타일
     backgroundColor: '#eeeeeeff',
-    padding: 15,
+    padding: 16,
     marginVertical: 8,
     borderRadius: 16,
     elevation: 2,
@@ -44,20 +45,22 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between', // ✨ 양쪽 끝으로 요소를 배치
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   dateText: { // 2) 날짜 텍스트 스타일
     fontSize: 20,
     fontWeight: 'bold',
     color: '#0c0c0c',
     marginTop: 2.5,
+    marginLeft: 4,
   },
   scoreBox: { // 3) 점수 박스 스타일
     paddingHorizontal: 12, 
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight : 4,
   },
   scoreText: { // 4) 점수 텍스트 스타일
     fontSize: 16, // 
@@ -82,23 +85,23 @@ export const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '300', // 너무 두껍지 않게
     fontWeight: 'semibold',
-    marginRight: 15,
-    marginBottom: 5,
+    marginRight: 16,
+    marginBottom: 4,
   },
   weatherIcon: { // 4)날씨 아이콘 스타일
-    width: 45,   // 너비
-    height: 45,  // 높이
+    width: 48,   // 너비
+    height: 48,  // 높이
     resizeMode: 'contain', // 이미지 비율 유지하며 크기 조정
-    marginRight: 15, // 아이콘과 상세 정보 사이의 간격
+    marginRight: 16, // 아이콘과 상세 정보 사이의 간격
   },
   detailsContainer: { // 5) 습도, 미세먼지 등 상세 정보 컨테이너
     flexDirection: 'row',
     justifyContent: 'space-between', // ✨ [변경] 요소들 사이에 균등한 공간 배분
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
   detailLabels: { // 6) 습도', 'UV' 등 텍스트 라벨 컨테이너
     alignItems: 'flex-start', // 왼쪽 정렬 유지
-    marginRight: 27, // ✨ [추가] 라벨과 값 사이의 간격 조절 (기존 간격의 50% 수준)
+    marginRight: 20, // ✨ [추가] 라벨과 값 사이의 간격 조절 (기존 간격의 50% 수준)
   },
   detailValues: { // 7) 수치 컨테이너
     alignItems: 'flex-end', // 오른쪽 정렬 유지
@@ -117,8 +120,11 @@ export const styles = StyleSheet.create({
 
   // --- 4. PLAB 경기 정보 영역 ---
   matchListContainer: { // 1) 경기 정보 리스트 컨테이너
-    marginTop: 15,
-    paddingTop: 10,
+    marginTop: 16,
+    marginBottom: 4,
+    marginLeft: 8,
+    marginRight: 8, 
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#aaa',
   },
@@ -126,12 +132,14 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 8,
+    marginLeft: 4,
   },
   matchDetailsContainer: { // 3) 경기 상세 정보 컨테이너
     flexDirection: 'row', // 아이콘과 텍스트를 가로로 나란히 배치
     alignItems: 'center',
     marginTop: 4,
+    marginLeft: 4,
   },
   matchDetailsText: { // 4) 경기 상세 정보 텍스트 스타일
     fontSize: 14,
@@ -144,20 +152,22 @@ export const styles = StyleSheet.create({
 
   // --- 5. 더 많은 매치 보러가기 버튼 ---
   buttonContainer: { // 1) 버튼 컨테이너
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 8,
+    marginBottom: 16,
+    borderRadius: 80,
+    overflow: 'hidden'
   },
 
   // --- 6. 에러 및 데이터 없음 메시지 ---
   error: { // 1) 에러 메시지 스타일
     color: 'red',
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: 48,
   },
   noDataText: { // 2) 데이터 없음 메시지 스타일
     textAlign: 'center',
     fontSize: 16,
-    marginTop: 30,
+    marginTop: 32,
     color: '#666',
   },
 

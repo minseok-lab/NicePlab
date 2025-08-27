@@ -1,6 +1,10 @@
 // api/airQualityService.js
 
-// api 호출 경로를 불러옵니다.
+// --- 1. Import Section ---
+// 1) api 호출 경로를 불러옵니다.
+import { apiClient } from './apiClient';
+
+// 2) 내부 모듈 (constants)
 import { API_ENDPOINTS, AIR_QUALITY_API_KEY } from '../constants/links';
 import { REGION_NAME_MAP } from '../constants/airKoreaRegion';
 
@@ -24,37 +28,25 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
   console.log(`\n--- [${informCode}] 미세먼지 데이터 조회 시작 ---`);
   console.log(`1. 조회 지역: ${sidoName}`);
 
-  try {
-    const response = await fetch(requestUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
-    }
-    
-    // 1. 서버의 응답을 텍스트로 먼저 읽어서 변수에 저장합니다.
-    const rawTextResponse = await response.text();
+  // ✨ try-catch 블록 대신 apiClient를 사용합니다.
+  const data = await apiClient(requestUrl, `미세먼지 ${informCode}`);
+  
+  if (data?.response?.body?.items?.length > 0) {
+    const dailyForecast = data.response.body.items.find(item => item.dataTime?.includes('17시'));
 
-    // 2. 저장된 변수를 사용해 JSON으로 파싱합니다.
-    const data = JSON.parse(rawTextResponse);
-    
-    if (data.response?.body?.items && data.response.body.items.length > 0) {
+    if (dailyForecast) {
+      const grades = dailyForecast.informGrade.split(',').map(s => s.trim());
+      const regionGrade = grades.find(g => g.startsWith(apiRegionName));
+      const gradeValue = regionGrade ? regionGrade.split(' : ')[1] : '정보없음';
       
-      const dailyForecast = data.response.body.items.find(item => item.dataTime && item.dataTime.includes('17시'));
-
-      if (dailyForecast) {
-        const grades = dailyForecast.informGrade.split(',').map(s => s.trim());
-        const regionGrade = grades.find(g => g.startsWith(apiRegionName));
-        console.log(`5. '${sidoName}' 지역의 예보 등급:`, regionGrade);
-        
-        console.log(`--- [${informCode}] 조회 성공 ---`);
-        return regionGrade ? regionGrade.split(' : ')[1] : '정보없음';
-      }
+      console.log(`2. '${sidoName}' 지역의 예보 등급:`, gradeValue);
+      console.log(`--- [${informCode}] 조회 성공 ---`);
+      return gradeValue;
     }
-    console.log(`--- [${informCode}] 조회 실패: 데이터 없음 ---`);
-    return '정보없음';
-  } catch (error) {
-    console.error(`[${informCode}] processing error:`, error);
-    throw error; 
   }
+  
+  console.log(`--- [${informCode}] 조회 실패: 데이터 없음 ---`);
+  return '정보없음';
 };
 
 /**
