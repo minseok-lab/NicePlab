@@ -1,4 +1,5 @@
-// exerciseScoringRules.js
+// utils/exercise/exerciseScoringRules.js
+
 import { humidityThresholds, windSpeedThresholds, airQualityGradeMap } from '../../configs/exerciseScoreCriteria.js';
 
 // --- 핵심 점수 계산 헬퍼 함수들 ---
@@ -31,13 +32,13 @@ function getHumidityScore(humidity) {
     if (45 <= humidity && humidity <= 55) return 100;
 
     const found = humidityThresholds.find(item => humidity <= item.maxHumidity);
-    return found ? found.score : 20; // 85 초과는 20점
+    return found ? found.score : 25; // 85 초과는 20점
 }
 
 // 4) 풍속에 따른 점수화
 function getWindSpeedScore(speed) {
-  const found = windSpeedThresholds.find(item => speed < item.maxSpeed);
-  return found ? found.score : 20;
+    const found = windSpeedThresholds.find(item => speed < item.maxSpeed);
+    return found ? found.score : 20;
 }
 
 // 5) 자외선 지수(UV Index) 점수화
@@ -50,16 +51,38 @@ function getUvIndexScore(uvi) {
 }
 
 // 6) 날씨 상태 및 강수 형태에 따른 점수화
-function getWeatherConditionScore(sky, pty) {
+function getWeatherConditionScore(sky, pty, season) {
     if (pty > 0) {
         if ([1, 4, 5].includes(pty)) return 10; // 비/빗방울
         if ([2, 6].includes(pty)) return 20;    // 비/눈
         if ([3, 7].includes(pty)) return 30;    // 눈/눈날림
         return 0;
     }
-    if (sky === 1) return 100;
-    if (sky === 3) return 95; // 구름많음, 구름조금 통합
-    if (sky === 4) return 90;
+    // 계절별로 하늘 상태 점수를 다르게 부여
+    switch (season) {
+        case 'spring':
+        case 'autumn':
+            if (sky === 1) return 90;  // 맑음
+            if (sky === 3) return 100; // 구름많음
+            if (sky === 4) return 90;  // 흐림
+            break;
+        case 'summer':
+            if (sky === 1) return 90;  // 맑음
+            if (sky === 3) return 95;  // 구름많음
+            if (sky === 4) return 100; // 흐림
+            break;
+        case 'winter':
+            if (sky === 1) return 100; // 맑음
+            if (sky === 3) return 95;  // 구름많음
+            if (sky === 4) return 90;  // 흐림
+            break;
+        default:
+            // 혹시 모를 예외상황에서는 기본 점수 부여
+            if (sky === 1) return 100;
+            if (sky === 3) return 95;
+            if (sky === 4) return 90;
+            break;
+    }
     return 50;
 }
 
@@ -76,11 +99,11 @@ function getAirQualityScore(grade) {
  */
 export const scoringRules = {
     wbgt: (data) => getWbgtScore(calculateWbgt(data.temp, data.humidity)),
-    temp: (data) => getTemperatureScore(data.temp),
-    humidity: (data) => getHumidityScore(data.humidity),
-    wind: (data) => getWindSpeedScore(data.wind),
-    uvIndex: (data) => getUvIndexScore(data.uvIndex),
-    condition: (data) => getWeatherConditionScore(data.sky, data.pty),
-    pm10: (data) => getAirQualityScore(data.pm10Grade),
-    pm25: (data) => getAirQualityScore(data.pm25Grade),
+    temp: (data, season) => getTemperatureScore(data.temp),
+    humidity: (data, season) => getHumidityScore(data.humidity),
+    wind: (data, season) => getWindSpeedScore(data.wind_speed),
+    uvIndex: (data, season) => getUvIndexScore(data.uvIndex),
+    condition: (data, season) => getWeatherConditionScore(data.sky, data.pty, season),
+    pm10: (data, season) => getAirQualityScore(data.pm10Grade),
+    pm25: (data, season) => getAirQualityScore(data.pm25Grade),
 };

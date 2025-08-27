@@ -2,9 +2,24 @@
 
 /**
  * 각 날씨 항목별 점수 계산 가중치
- * 전체 합이 1.0이 되도록 관리하는 것을 권장합니다.
+ * 전체 합이 1.0이 되도록 관리합니다.
  */
-export const weights = {
+
+export const seasonScoreCriteria = {
+  // 🌸 봄: 황사와 미세먼지, 큰 일교차에 중점
+  spring: {
+    wbgt: 0.05,
+    temp: 0.05,
+    humidity: 0.05,
+    wind: 0.05,
+    uvIndex: 0.1,
+    condition: 0.3,
+    pm10: 0.2,
+    pm25: 0.2,
+  },
+
+  // ☀️ 여름: 열 스트레스(WBGT)와 자외선, 습도에 중점 (기존)
+  summer: {
     wbgt: 0.3,
     temp: 0.015,
     humidity: 0.015,
@@ -13,7 +28,33 @@ export const weights = {
     condition: 0.3,
     pm10: 0.1,
     pm25: 0.1,
+  },
+
+  // 🍂 가을: 쾌적한 날씨지만 미세먼지와 일교차 고려
+  autumn: {
+    wbgt: 0.05,
+    temp: 0.1,
+    humidity: 0.05,
+    wind: 0.1,
+    uvIndex: 0.1,
+    condition: 0.3,
+    pm10: 0.15,
+    pm25: 0.15,
+  },
+
+  // ❄️ 겨울: 체감온도(기온+바람)와 대기질에 중점
+  winter: {
+    wbgt: 0,
+    temp: 0.3,
+    humidity: 0.05,
+    wind: 0.2,
+    uvIndex: 0.05,
+    condition: 0.2,
+    pm10: 0.1,
+    pm25: 0.1,
+  },
 };
+
 
 /**
  * 운동 부적합으로 판단하여 점수 계산에서 제외하는 조건
@@ -51,13 +92,13 @@ export const windSpeedThresholds = [
  * ✨ Key Improvement: if-else 문을 데이터 기반 구조로 변경하여 가독성과 유지보수성을 높였습니다.
  */
 export const humidityThresholds = [
-    { maxHumidity: 25, score: 50 },
-    { maxHumidity: 35, score: 70 },
-    { maxHumidity: 45, score: 90 },
+    { maxHumidity: 25, score: 60 },
+    { maxHumidity: 35, score: 80 },
+    { maxHumidity: 45, score: 95 },
     { maxHumidity: 55, score: 100 }, // 최적 구간
-    { maxHumidity: 65, score: 80 },
-    { maxHumidity: 75, score: 60 },
-    { maxHumidity: 85, score: 40 },
+    { maxHumidity: 65, score: 90 },
+    { maxHumidity: 75, score: 70 },
+    { maxHumidity: 85, score: 50 },
     // 85% 초과는 20점
 ];
 

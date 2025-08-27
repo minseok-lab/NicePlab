@@ -23,7 +23,7 @@ import Logo from './assets/nicePlabLogo.png';
 function AppContent() {
   // 1) 시스템 UI(하단 바 등)에 의해 가려지는 영역의 크기를 가져옵니다.
   const insets = useSafeAreaInsets(); 
-  const { weatherData, errorMsg, isLoading, plabMatches, lastUpdateTime, uvBaseDate, refetch, toastMessage, clearToast } = useWeather();
+  const { weatherData, errorMsg, isLoading, plabMatches, lastUpdateTime, season, uvBaseDate, refetch, toastMessage, clearToast } = useWeather();
   
   // ✨ 개선안 1: 'refreshing' 상태와 'onRefresh' 함수를 제거합니다.
   // isLoading과 refetch를 RefreshControl에서 직접 사용해 상태 관리를 통합합니다.
@@ -58,7 +58,8 @@ function AppContent() {
             plabMatches={plabMatches} 
             plabLink={PLAB_FOOTBALL_URL} 
             lastUpdateTime={lastUpdateTime} 
-            uvBaseDate={uvBaseDate} 
+            uvBaseDate={uvBaseDate}
+            season={season}
           />
         ) : null}
       </ScrollView>

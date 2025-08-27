@@ -1,16 +1,13 @@
-// exerciseCalculator.js
-import { weights, exclusionConditions } from '../../configs/exerciseScoreCriteria.js';
-import { scoringRules } from './scoringRules.js';
+// utils/scoreCalculator.js
 
-/**
- * 한 시간 분량의 데이터가 운동 부적합 조건에 해당하는지 확인합니다.
- * @param {object} data - 시간별 날씨 데이터
- * @returns {boolean} - 제외 여부
- */
+// --- import 구문 ---
+import { seasonScoreCriteria, exclusionConditions } from '../../configs/exerciseScoreCriteria';
+import { scoringRules } from './scoringRules';
+
 function isExcluded(data) {
+    if (!data) return true;
     const { temp, humidity, pm10Grade, pm25Grade } = data;
     const { temp: tempRule, humidity: humidityRule, pm10Grade: pm10Rule, pm25Grade: pm25Rule } = exclusionConditions;
-
     return (
         temp < tempRule.min || temp >= tempRule.max ||
         humidity >= humidityRule.max ||
@@ -19,57 +16,47 @@ function isExcluded(data) {
     );
 }
 
-/**
- * 한 시간 분량의 날씨 데이터에 대해 모든 규칙을 적용하여 최종 가중 평균 점수를 계산합니다.
- * @param {object} data - 시간별 날씨 데이터
- * @returns {number} - 계산된 점수 (-1은 '제외'를 의미)
- */
-function calculateScoreForHour(data) {
-    if (isExcluded(data)) {
-        return -1;
-    }
+function calculateScoreForHour(data, weights, season) {
+    if (isExcluded(data)) return -1;
     
     let totalWeightedScore = 0;
-    let totalActiveWeight = 0;
-
-    // ✨ Key Improvement: 설정된 가중치(weights)를 기준으로 필요한 규칙(rules)을 동적으로 실행합니다.
-    // 새로운 점수 항목이 추가되어도 이 코드는 수정할 필요가 없습니다. 확장성 극대화!
     for (const key in weights) {
         if (scoringRules[key]) {
-            const score = scoringRules[key](data);
+            const score = scoringRules[key](data, season);
             if (score !== null && score !== undefined) {
                 totalWeightedScore += score * weights[key];
-                totalActiveWeight += weights[key];
             }
         }
     }
-    
-    return totalActiveWeight > 0 ? totalWeightedScore / totalActiveWeight : 0;
+    return totalWeightedScore;
 }
 
-/**
- * 전체 날씨 데이터 리스트를 받아, '2시간 평균 점수'가 가장 높은 시간대를 추천합니다.
- * @param {Array} weatherList - 시간대별 날씨 데이터 배열
- * @returns {Array} - 추천 시간대 정보 배열
- */
-export const getBestExerciseTimes = (weatherList) => {
+export const getBestExerciseTimes = (weatherList, season) => {
+    if (!Array.isArray(weatherList) || weatherList.length === 0 || !season) {
+        return [];
+    }
+    const currentWeights = seasonScoreCriteria[season];
+    if (!currentWeights) {
+        console.warn(`'${season}'에 대한 가중치가 없어 계산을 건너뜁니다.`);
+        return [];
+    }
+    
     const averagedScoredList = [];
-
     for (let i = 0; i < weatherList.length - 1; i++) {
         const startHourData = weatherList[i];
         const nextHourData = weatherList[i + 1];
+        if (!startHourData || !nextHourData) continue;
 
-        const startHourScore = calculateScoreForHour(startHourData);
-        const nextHourScore = calculateScoreForHour(nextHourData);
+        const startHourScore = calculateScoreForHour(startHourData, currentWeights, season);
+        const nextHourScore = calculateScoreForHour(nextHourData, currentWeights, season);
 
         let averageScore = -1;
         if (startHourScore !== -1 && nextHourScore !== -1) {
             averageScore = (startHourScore + nextHourScore) / 2;
         }
-
         averagedScoredList.push({
             ...startHourData,
-            totalScore: averageScore
+            totalScore: Math.round(averageScore * 10) / 10
         });
     }
 

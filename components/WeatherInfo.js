@@ -20,7 +20,7 @@ import MatchDetails from './MatchDetails';
 
 
 // --- Main Component ---
-const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime }) => {
+const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
 
   // --- State ---
   const [expandedTimestamp, setExpandedTimestamp] = useState(null); // ✨ [정의명 통일] 펼쳐진 카드의 timestamp
@@ -31,10 +31,20 @@ const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime }
 
   // 1. 날씨 점수 기반 상위 20개 추천 시간대 후보 선정
   const bestWeatherTimes = useMemo(() => {
-    if (!weatherData?.list) return [];
-    const candidates = getBestExerciseTimes(weatherData.list);
-    return candidates.slice(0, 20);
-  }, [weatherData]);
+    console.log("--- WeatherInfo useMemo 실행 ---");
+    if (weatherData) {
+        if (Array.isArray(weatherData.list)) {
+        }
+    }
+    
+    // weatherData.list나 season이 아직 준비되지 않았다면,
+    // 계산을 시도하지 않고 즉시 빈 배열을 반환합니다.
+    if (!weatherData?.list || !season) {
+        return [];
+    }
+    const candidates = getBestExerciseTimes(weatherData.list, season);
+        return candidates.slice(0, 20);
+    }, [weatherData, season]);
 
   // 2. 각 시간대별 유효한(22시 이전) 매치 목록 미리 계산
   const matchesByTimestamp = useMemo(() => { // ✨ [정의명 통일]
@@ -53,12 +63,12 @@ const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime }
 
   // 3. "매치가 하나 이상 있는" 시간대만 최종 필터링하여 상위 5개 선정
   const finalBestTimes = useMemo(() => {
-    const filtered = bestWeatherTimes.filter(weatherItem => {
+      const filtered = bestWeatherTimes.filter(weatherItem => {
       const matchesInSlot = matchesByTimestamp.get(weatherItem.dt) || [];
       return matchesInSlot.length > 0;
     });
     return filtered.slice(0, 5);
-  }, [bestWeatherTimes, matchesByTimestamp]);
+  }, [bestWeatherTimes]);
 
 
   // --- Event Handlers ---

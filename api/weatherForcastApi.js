@@ -1,4 +1,4 @@
-// api/weatherApi.js
+// api/weatherForcastApi.js
 
 // api 호출 경로를 불러옵니다.
 import { apiClient } from './apiClient';

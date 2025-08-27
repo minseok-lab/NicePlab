@@ -83,8 +83,7 @@ export const styles = StyleSheet.create({
   },
   tempText: { // 3) 기온 텍스트
     fontSize: 40,
-    fontWeight: '300', // 너무 두껍지 않게
-    fontWeight: 'semibold',
+    fontWeight: '500', // 너무 두껍지 않게
     marginRight: 16,
     marginBottom: 4,
   },
