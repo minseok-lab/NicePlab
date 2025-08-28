@@ -2,7 +2,7 @@
 
 import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { SvgUri } from 'react-native-svg';
-import { styles } from '../styles/styles';
+import { matchDetailsStyles as styles } from '../styles';
 import { getTierFromLevel } from '../utils';
 import { getLevelBadgeUrl } from '../constants/links';
 

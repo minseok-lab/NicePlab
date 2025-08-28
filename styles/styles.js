@@ -17,16 +17,32 @@ export const styles = StyleSheet.create({
     alignSelf: 'left',
     marginBottom: 10,
   },
-  subHeader: { // 3) 서브 헤더 스타일
+  subHeader: { // 3) 서브 헤더 스타일 (추천 시간대별 경기용)
     fontSize: 20,
     fontWeight: '600',
     marginVertical: 12,
     textAlign: 'left',
+    color: '#333', // 헤더 텍스트 색상 추가
+    paddingLeft: 20, // LiveWeatherCard의 좌우 여백과 맞추기
+    paddingRight: 20,
   },
   loadingContainer: { // 4) 로딩 인디케이터 컨테이너
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // ✨ [수정] LiveWeatherCard 전용 카드 스타일 (이미지 배경 투명화)
+  liveWeatherCard: { // LiveWeatherCard의 최상위 컨테이너
+    backgroundColor: 'rgba(255, 255, 255, 1)', // 흰색 배경, 투명도 100%
+    borderRadius: 16,
+    padding: 20, // 이미지에 맞게 패딩 조절
+    marginHorizontal: 15, // 좌우 여백 조절
+    marginVertical: 10,
+    elevation: 4, // Android 그림자
+    shadowColor: '#000', // iOS 그림자
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
   },
   card: { // 5) 날씨 정보 카드 스타일
     backgroundColor: '#eeeeeeff',

@@ -1,7 +1,7 @@
 // components/loadingIndicator.js
 
 import { View, ActivityIndicator, Text } from 'react-native';
-import { styles } from '../styles/styles';
+import { globalStyles as styles } from '../styles';
 
 const LoadingIndicator = () => (
   <View style={styles.loadingContainer}>

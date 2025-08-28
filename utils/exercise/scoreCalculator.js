@@ -1,4 +1,4 @@
-// utils/scoreCalculator.js
+// utils/exercise/scoreCalculator.js
 
 // --- import 구문 ---
 import { seasonScoreCriteria, exclusionConditions } from '../../configs/exerciseScoreCriteria';
@@ -16,7 +16,7 @@ function isExcluded(data) {
     );
 }
 
-function calculateScoreForHour(data, weights, season) {
+export function calculateScoreForHour(data, weights, season) {
     if (isExcluded(data)) return -1;
     
     let totalWeightedScore = 0;

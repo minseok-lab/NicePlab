@@ -13,7 +13,7 @@ import { PLAB_FOOTBALL_URL } from './constants';
 import { WeatherInfo, LoadingIndicator, ErrorMessage, Toast } from './components';
 
 // 4) 스타일
-import { styles } from './styles/styles.js';
+import { globalStyles as styles } from './styles';
 
 // 5) 에셋
 import Logo from './assets/nicePlabLogo.png';

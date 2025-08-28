@@ -12,12 +12,12 @@ import { fetchPlabMatchDetails } from '../api/plabApi';
 import { getBestExerciseTimes } from '../utils';
 
 // 4) 스타일
-import { styles } from '../styles/styles';
+import { globalStyles, forcastCardStyles } from '../styles';
 
 // 5) 컴포넌트
 import WeatherCard from './WeatherCard';
 import MatchDetails from './MatchDetails';
-
+import LiveWeatherCard from './LiveWeatherCard';
 
 // --- Main Component ---
 const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
@@ -120,7 +120,10 @@ const handleToggleCard = async (timestamp) => {
   // --- Render ---
   return (
     <ScrollView>
-      <Text style={styles.subHeader}>{weatherData?.city?.name || '...'} 추천 시간대</Text>
+      <LiveWeatherCard />
+      
+      {/* [추가] LiveWeatherCard와 아래 추천 목록 사이에 구분을 위한 헤더를 추가하면 더 좋습니다. */}
+      <Text style={globalStyles.subHeader}>추천 시간대별 경기</Text>
       
       {finalRecommendedSlots.length > 0 ? (
         finalRecommendedSlots.map((weatherItem) => {
@@ -133,7 +136,7 @@ const handleToggleCard = async (timestamp) => {
             // TouchableOpacity가 카드 전체를 감싸고, 클릭 이벤트를 관리합니다.
             <TouchableOpacity 
               key={timestamp} 
-              style={styles.card}
+              style={forcastCardStyles.cardContainer}
               onPress={() => handleToggleCard(timestamp)}
               activeOpacity={0.8}
             >
@@ -151,25 +154,25 @@ const handleToggleCard = async (timestamp) => {
           );
         })
       ) : (
-        <Text style={styles.noDataText}>추천할 만한 시간대가 없네요.</Text>
+        <Text style={globalStyles.noDataText}>추천할 만한 시간대가 없네요.</Text>
       )}
 
       {/* 하단 버튼 및 푸터 */}
-      <View style={styles.buttonContainer}>
+      <View style={globalStyles.buttonContainer}>
         <Button 
           title="플랩에서 더 많은 매치 찾기" 
           onPress={() => Linking.openURL(plabLink)}
         />
       </View>
-      <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>기상정보출처: 기상청, 에어코리아</Text>
-        <Text style={styles.footerText}>날씨 아이콘 : Google Weather API</Text>
-        <Text style={styles.footerText}>업데이트 {lastUpdateTime}</Text>
-        <Text style={styles.footerText}> </Text>
-        <Text style={styles.footerText}>플랩 매치 출처: 플랩풋볼</Text>
-        <Text style={styles.footerText}>Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.</Text>
-        <Text style={styles.footerText}> </Text>
-        <Text style={styles.footerText}> </Text>
+      <View style={globalStyles.footerContainer}>
+        <Text style={globalStyles.footerText}>기상정보출처: 기상청, 에어코리아</Text>
+        <Text style={globalStyles.footerText}>날씨 아이콘 : Google Weather API</Text>
+        <Text style={globalStyles.footerText}>업데이트 {lastUpdateTime}</Text>
+        <Text style={globalStyles.footerText}> </Text>
+        <Text style={globalStyles.footerText}>플랩 매치 출처: 플랩풋볼</Text>
+        <Text style={globalStyles.footerText}>Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.</Text>
+        <Text style={globalStyles.footerText}> </Text>
+        <Text style={globalStyles.footerText}> </Text>
       </View>
     </ScrollView>
   );
