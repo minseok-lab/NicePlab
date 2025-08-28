@@ -4,7 +4,7 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (상수)
-import { API_ENDPOINTS, KMA_WEATHER_API_KEY } from '../constants/links';
+import { API_ENDPOINTS, KMA_PAST_TEMPERATURE_API_KEY } from '../constants/links';
 
 
 // --- Main Export Function ---
@@ -71,7 +71,7 @@ function getPastDateRange(daysAgo) {
  * @returns {Promise<Array|null>} 파싱된 데이터 배열 또는 실패 시 null
  */
 async function fetchAsosData(stationId, startDate, endDate) {
-  const requestUrl = `${API_ENDPOINTS.KMA_ASOS_DAILY}?serviceKey=${KMA_WEATHER_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&dataCd=ASOS&dateCd=DAY&startDt=${startDate}&endDt=${endDate}&stnIds=${stationId}`;
+  const requestUrl = `${API_ENDPOINTS.KMA_ASOS_DAILY}?serviceKey=${KMA_PAST_TEMPERATURE_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&dataCd=ASOS&dateCd=DAY&startDt=${startDate}&endDt=${endDate}&stnIds=${stationId}`;
 
   const data = await apiClient(requestUrl, '기상청 ASOS 일자료');
 

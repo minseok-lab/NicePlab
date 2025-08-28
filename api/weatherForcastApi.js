@@ -4,7 +4,7 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (contsants)
-import { API_ENDPOINTS, KMA_WEATHER_API_KEY } from '../constants/links';
+import { API_ENDPOINTS, KMA_FORCAST_WEATHER_API_KEY } from '../constants/links';
 
 
 // --- Main Export Function ---
@@ -89,7 +89,7 @@ function getApiBaseDateTime(dateObj) {
  * apiClient를 사용하여 리팩토링되었습니다.
  */
 async function fetchAndParseData(grid, baseDate, baseTime) {
-  const requestUrl = `${API_ENDPOINTS.KMA_WEATHER}?serviceKey=${KMA_WEATHER_API_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
+  const requestUrl = `${API_ENDPOINTS.KMA_FORCAST_WEATHER}?serviceKey=${KMA_FORCAST_WEATHER_API_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
   console.log(`[날씨 API] ➡️ 요청 시작: BaseDate=${baseDate}, BaseTime=${baseTime}`);
   // apiClient가 fetch, 에러 처리, JSON 파싱을 모두 담당합니다.
   const data = await apiClient(requestUrl, '기상청 단기예보');
