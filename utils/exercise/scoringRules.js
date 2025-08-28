@@ -91,6 +91,49 @@ function getAirQualityScore(grade) {
     return airQualityGradeMap[grade] ?? 50; // 정보없음 등 예외 케이스는 50점
 }
 
+// 8) 계절별 일광(Daylight) 점수 계산 함수
+function getDaylightScore(dt, sunrise, sunset, season) {
+
+    const currentTime = dt * 1000;
+    const sunriseTime = sunrise.getTime();
+    const sunsetTime = sunset.getTime();
+
+    let twilightBuffer; // 계절별로 달라지는 여명/황혼 시간 버퍼 (단위: 밀리초)
+
+    // 1. 계절에 따라 '어둑어둑한 시간'의 길이를 다르게 설정
+    switch (season) {
+        // 여름에는 해가 진 후에도 한동안 밝음
+        case 'summer':
+            twilightBuffer = 60 * 60 * 1000; // 60분
+            break;
+        
+        // 겨울에는 해가 지면 금방 어두워짐
+        case 'winter':
+            twilightBuffer = 30 * 60 * 1000; // 30분
+            break;
+
+        // 봄, 가을은 중간값
+        case 'spring':
+        case 'autumn':
+        default:
+            twilightBuffer = 45 * 60 * 1000; // 45분
+            break;
+    }
+
+    // 2. 설정된 버퍼를 기준으로 점수 계산
+    // 완전한 밤 (해가 뜨기 전 또는 지고 난 한참 뒤)
+    if (currentTime < sunriseTime - twilightBuffer || currentTime > sunsetTime + twilightBuffer) {
+        return 50; // 안전을 위해 0점
+    }
+    
+    // 완전한 낮 (해가 떠 있는 동안)
+    if (currentTime >= sunriseTime && currentTime <= sunsetTime) {
+        return 100;
+    }
+
+    // 그 외 어둑어둑한 시간 (여명/황혼)
+    return 80;
+}
 
 /**
  * ✨ Key Improvement: 모든 규칙을 객체 하나로 묶어 내보냅니다.
@@ -106,4 +149,14 @@ export const scoringRules = {
     condition: (data, season) => getWeatherConditionScore(data.sky, data.pty, season),
     pm10: (data, season) => getAirQualityScore(data.pm10Grade),
     pm25: (data, season) => getAirQualityScore(data.pm25Grade),
+    daylight: (data, season, daylightInfo) => {
+        // daylightInfo가 아직 준비되지 않았다면(null 또는 undefined),
+        // .sunrise 속성을 읽기 전에 즉시 기본 점수를 반환하여 충돌을 방지합니다.
+        if (!daylightInfo) {
+            return 50; // 기본 점수
+        }
+        
+        // daylightInfo가 유효할 때만 getDaylightScore 함수를 호출합니다.
+        return getDaylightScore(data.dt, daylightInfo.sunrise, daylightInfo.sunset, season);
+    },
 };

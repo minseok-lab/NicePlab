@@ -29,100 +29,106 @@ const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime, 
 
   // --- Memoized Data Processing ---
 
-  // 1. 날씨 점수 기반 상위 20개 추천 시간대 후보 선정
-  const bestWeatherTimes = useMemo(() => {
-    console.log("--- WeatherInfo useMemo 실행 ---");
-    if (weatherData) {
-        if (Array.isArray(weatherData.list)) {
-        }
+  // [개선] 3단계 로직을 하나의 useMemo로 통합하여 성능 및 가독성 향상
+  const finalRecommendedSlots = useMemo(() => {
+    // 1. 계산에 필요한 데이터가 준비되지 않았다면 즉시 빈 배열을 반환합니다.
+    if (!weatherData?.list || !season || !plabMatches) {
+      return [];
     }
-    
-    // weatherData.list나 season이 아직 준비되지 않았다면,
-    // 계산을 시도하지 않고 즉시 빈 배열을 반환합니다.
-    if (!weatherData?.list || !season) {
-        return [];
-    }
-    const candidates = getBestExerciseTimes(weatherData.list, season);
-        return candidates.slice(0, 20);
-    }, [weatherData, season]);
 
-  // 2. 각 시간대별 유효한(22시 이전) 매치 목록 미리 계산
-  const matchesByTimestamp = useMemo(() => { // ✨ [정의명 통일]
-    const map = new Map();
-    bestWeatherTimes.forEach(weatherItem => {
+    // 2. 날씨 점수 기반 상위 20개 추천 시간대 후보를 먼저 선정합니다.
+    const bestWeatherCandidates = getBestExerciseTimes(weatherData.list, season).slice(0, 25);
+
+    // 3. 최종 추천 목록 (매치가 있는 시간대)을 담을 배열입니다.
+    const filtered = [];
+
+    // 4. 날씨 좋은 시간대 후보를 순회합니다.
+    for (const weatherItem of bestWeatherCandidates) {
       const slotStartTime = new Date(weatherItem.dt * 1000);
       const slotEndTime = new Date(slotStartTime.getTime() + 60 * 60 * 1000);
-      const filteredMatches = plabMatches.filter(match => {
-        const matchStartTime = new Date(match.schedule);
-        return matchStartTime >= slotStartTime && matchStartTime < slotEndTime && matchStartTime.getHours() <= 22;
-      });
-      map.set(weatherItem.dt, filteredMatches);
-    });
-    return map;
-  }, [bestWeatherTimes, plabMatches]);
 
-  // 3. "매치가 하나 이상 있는" 시간대만 최종 필터링하여 상위 5개 선정
-  const finalBestTimes = useMemo(() => {
-      const filtered = bestWeatherTimes.filter(weatherItem => {
-      const matchesInSlot = matchesByTimestamp.get(weatherItem.dt) || [];
-      return matchesInSlot.length > 0;
-    });
-    return filtered.slice(0, 5);
-  }, [bestWeatherTimes]);
+      // 5. 해당 시간대에 매치가 '하나라도 있는지' 확인합니다. (시간 필터 제외)
+      // .some()을 사용해 매치를 찾는 즉시 순회를 멈춰 효율적입니다.
+      const hasMatchInSlot = plabMatches.some(match => {
+        const matchStartTime = new Date(match.schedule);
+        return matchStartTime >= slotStartTime && matchStartTime < slotEndTime;
+      });
+
+      // 6. 매치가 있다면, 최종 목록에 추가합니다.
+      if (hasMatchInSlot) {
+        filtered.push(weatherItem);
+      }
+      
+      // 7. 최종 목록이 7개가 채워지면, 더 이상 불필요한 계산을 하지 않고 즉시 종료합니다.
+      if (filtered.length === 7) {
+        break;
+      }
+    }
+
+    return filtered;
+  }, [weatherData, season, plabMatches]); // 모든 의존성을 명시합니다.
 
 
   // --- Event Handlers ---
 
-  // 카드 펼치기/접기 및 상세 정보 비동기 로드 핸들러
-  const handleToggleCard = async (timestamp) => { // ✨ [정의명 통일]
-    // 이미 열려있는 카드를 다시 누르면 닫기
-    if (expandedTimestamp === timestamp) {
-      setExpandedTimestamp(null);
-      return;
-    }
+// 카드 펼치기/접기 및 상세 정보 비동기 로드 핸들러
+const handleToggleCard = async (timestamp) => {
+  // 이미 열려있는 카드를 다시 누르면 닫기
+  if (expandedTimestamp === timestamp) {
+    setExpandedTimestamp(null);
+    return;
+  }
 
-    // 새 카드 열기
-    setExpandedTimestamp(timestamp);
+  // 새 카드 열기
+  setExpandedTimestamp(timestamp);
+  
+  //    전체 plabMatches 목록에서 현재 시간대에 맞는 매치를 직접 필터링합니다.
+  const slotStartTime = new Date(timestamp * 1000);
+  const slotEndTime = new Date(slotStartTime.getTime() + 60 * 60 * 1000);
+  
+  const matchesToFetch = plabMatches.filter(match => {
+    const matchStartTime = new Date(match.schedule);
+    return matchStartTime >= slotStartTime && matchStartTime < slotEndTime;
+  });
+
+  // 이미 데이터가 있거나, 해당 시간대에 매치가 없으면 API 호출 방지
+  if (detailedMatches[timestamp] || matchesToFetch.length === 0) {
+    return;
+  }
+
+  // 로딩 상태 시작
+  setLoadingTimestamps(prev => new Set(prev).add(timestamp));
+
+  try {
+    const detailPromises = matchesToFetch.map(match => fetchPlabMatchDetails(match.id));
+    const results = await Promise.all(detailPromises);
     
-    const matchesToFetch = matchesByTimestamp.get(timestamp) || [];
-    // 이미 데이터가 있거나, 해당 시간대에 매치가 없으면 API 호출 방지
-    if (detailedMatches[timestamp] || matchesToFetch.length === 0) {
-      return;
-    }
+    // 상세 정보 state에 저장 (null 값 제외)
+    setDetailedMatches(prev => ({ ...prev, [timestamp]: results.filter(Boolean) }));
+  } catch (error) {
+    console.error("Failed to fetch match details:", error);
+  } finally {
+    // 로딩 상태 종료
+    setLoadingTimestamps(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(timestamp);
+      return newSet;
+    });
+  }
+};
 
-    // 로딩 상태 시작
-    setLoadingTimestamps(prev => new Set(prev).add(timestamp));
-
-    try {
-      const detailPromises = matchesToFetch.map(match => fetchPlabMatchDetails(match.id));
-      const results = await Promise.all(detailPromises);
-      
-      // 상세 정보 state에 저장 (null 값 제외)
-      setDetailedMatches(prev => ({ ...prev, [timestamp]: results.filter(Boolean) }));
-    } catch (error) {
-      console.error("Failed to fetch match details:", error);
-    } finally {
-      // 로딩 상태 종료
-      setLoadingTimestamps(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(timestamp);
-        return newSet;
-      });
-    }
-  };
-
-  // --- Render (✨ 매우 간결해진 렌더링 로직) ---
+  // --- Render ---
   return (
     <ScrollView>
-      <Text style={styles.subHeader}>{weatherData.city.name} 추천 시간대</Text>
+      <Text style={styles.subHeader}>{weatherData?.city?.name || '...'} 추천 시간대</Text>
       
-      {finalBestTimes.length > 0 ? (
-        finalBestTimes.map((weatherItem) => {
-          const { dt: timestamp } = weatherItem;
+      {finalRecommendedSlots.length > 0 ? (
+        finalRecommendedSlots.map((weatherItem) => {
+          const { dt: timestamp, matches } = weatherItem; // ❗ weatherItem에서 matches를 바로 가져옵니다.
           const isExpanded = expandedTimestamp === timestamp;
           const isLoading = loadingTimestamps.has(timestamp);
-          const matchesForThisSlot = detailedMatches[timestamp] || matchesByTimestamp.get(timestamp) || [];
-
+          const matchesForThisSlot = detailedMatches[timestamp] || matches || [];
+          
           return (
             // TouchableOpacity가 카드 전체를 감싸고, 클릭 이벤트를 관리합니다.
             <TouchableOpacity 

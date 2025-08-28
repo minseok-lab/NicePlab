@@ -27,6 +27,7 @@ export const determineCurrentSeason = async () => { // ⭐ 파라미터 stationI
     if (pastTempData && pastTempData.list) {
       // 5. getSeason 유틸리티로 계절 판단
       const season = getSeason(pastTempData.list);
+      console.log(`[계절 판단] ✅ 계절 판단 성공: ${season} 가중치를 사용합니다.`);
       return season;
     } else {
       console.error("SeasonDecision: 기온 데이터가 없습니다.");

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 // 2) 서드파티 라이브러리
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SunCalc from 'suncalc';
 
 // 3) api 호출 경로를 불러옵니다.
 import { fetchKmaWeatherForcast, fetchPlabMatches, fetchUvIndexForcast, fetchAirQualityForcast } from '../api';
@@ -132,6 +133,7 @@ export const useWeather = () => {
     const [lastUpdateTime, setLastUpdateTime] = useState(null);
     const [toastMessage, setToastMessage] = useState(null);
     const [season, setSeason] = useState(null); // ✨ 1. 계절을 저장할 state 추가
+    const [daylightInfo, setDaylightInfo] = useState(null); // 2. 일출/일몰 정보 state 추가
 
     const loadAllData = useCallback(async () => {
         setIsLoading(true);
@@ -163,6 +165,12 @@ export const useWeather = () => {
                 setSeason('summer'); // 에러 발생 시에도 기본값 설정
                 setToastMessage('과거 날씨 정보를 가져오는 데 실패했습니다.');
                 console.error("과거 날씨 조회 또는 계절 판단 중 에러:", seasonError);
+            }
+            // 3. 위치 정보로 일출/일몰 시간 계산
+            if (locationInfo.latitude && locationInfo.longitude) {
+                const now = new Date();
+                const times = SunCalc.getTimes(now, locationInfo.latitude, locationInfo.longitude);
+                setDaylightInfo({ sunrise: times.sunrise, sunset: times.sunset });
             }
 
             // 3) 원격 API에서 최신 데이터 가져오기
@@ -215,6 +223,7 @@ export const useWeather = () => {
         plabMatches, 
         lastUpdateTime,
         season,
+        daylightInfo,
         refetch: loadAllData, 
         toastMessage, 
         clearToast: () => setToastMessage(null) 
