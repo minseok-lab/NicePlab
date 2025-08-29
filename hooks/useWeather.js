@@ -136,81 +136,87 @@ export const useWeather = () => {
     const [daylightInfo, setDaylightInfo] = useState(null); // 2. 일출/일몰 정보 state 추가
 
     const loadAllData = useCallback(async () => {
-        setIsLoading(true);
-        setToastMessage(null);
+    setIsLoading(true);
+    setToastMessage(null);
+    
+    try {
+        // 1) 캐시에서 데이터 우선 로드
+        const cached = await loadCache(setWeatherData, setPlabMatches, setLastUpdateTime);
         
-        try {
-            // 1) 캐시에서 데이터 우선 로드 (UI 즉시 반응)
-            const cached = await loadCache(setWeatherData, setPlabMatches, setLastUpdateTime);
-            
-            // 2) 리팩토링된 함수를 사용하여 위치 정보 가져오기
-            let locationInfo = await getWeatherLocationInfo();
-            if (!locationInfo) {
-                locationInfo = getDefaultRegionInfo(); // 실패 시 기본값 사용
-                setToastMessage('위치 정보를 찾을 수 없어 기본 지역으로 표시합니다.');
-            }
-
-            // ✨ 2. 계절 정보 가져오기 로직 추가
-            try {
-                const pastData = await fetchPastTemperature(locationInfo.stationId); // 과거 날씨 API 호출
-                const currentSeason = getSeason(pastData); // 계절 판단
-                if (currentSeason) {
-                    setSeason(currentSeason);
-                } else {
-                    setSeason('summer'); // 실패 시 기본값 'summer'로 설정
-                    console.warn("계절 판단 실패. 기본값 'summer'를 사용합니다.");
-                    setToastMessage('과거 날씨 정보가 부족해, 현재 계절(여름) 기준으로 추천합니다.');
-                }
-            } catch (seasonError) {
-                setSeason('summer'); // 에러 발생 시에도 기본값 설정
-                setToastMessage('과거 날씨 정보를 가져오는 데 실패했습니다.');
-                console.error("과거 날씨 조회 또는 계절 판단 중 에러:", seasonError);
-            }
-            // 3. 위치 정보로 일출/일몰 시간 계산
-            if (locationInfo.latitude && locationInfo.longitude) {
-                const now = new Date();
-                const times = SunCalc.getTimes(now, locationInfo.latitude, locationInfo.longitude);
-                setDaylightInfo({ sunrise: times.sunrise, sunset: times.sunset });
-            }
-
-            // 3) 원격 API에서 최신 데이터 가져오기
-            const { weatherResult, uvResult, airResult } = await fetchWeatherDataApis(locationInfo);
-            
-            // 4) 핵심 날씨 정보 로드 실패 시, 캐시 데이터를 보여주며 에러 처리
-            if (!weatherResult) {
-                setToastMessage(`날씨 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
-                throw new Error('Failed to fetch essential weather data.');
-            }
-            
-            // 5) 모든 데이터를 병합하여 최종 날씨 객체 생성
-            const mergedList = mergeAllWeatherData(weatherResult, uvResult, airResult, cached.weather);
-            const finalWeatherData = {
-                ...weatherResult,
-                city: { ...weatherResult.city, name: locationInfo.currentCity },
-                list: mergedList,
-            };
-            setWeatherData(finalWeatherData);
-            
-            // 6) 플랩 매치 정보 업데이트
-            const newPlabMatches = await fetchPlabMatches(finalWeatherData.list, locationInfo.regionId, locationInfo.cities);
-            if (newPlabMatches) {
-                setPlabMatches(newPlabMatches);
-            } else {
-                setToastMessage(`플랩 매치 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
-                // 플랩 매치 실패는 전체 로직을 중단시키지 않음. 기존 캐시 데이터 유지.
-            }
-            
-            // 7) 성공적으로 가져온 최신 데이터를 캐시에 저장
-            await updateCache(finalWeatherData, newPlabMatches || cached.plab, setLastUpdateTime);
-
-        } catch (err) {
-            // 위치 권한 거부, 네트워크 에러 등 모든 에러 처리
-            setErrorMsg(err.message);
-            console.error(err); // 개발자 확인용 에러 로그
-        } finally {
-            setIsLoading(false);
+        // 2) 위치 정보 가져오기
+        let locationInfo = await getWeatherLocationInfo();
+        if (!locationInfo) {
+            locationInfo = getDefaultRegionInfo();
+            setToastMessage('위치 정보를 찾을 수 없어 기본 지역으로 표시합니다.');
         }
-    }, []);
+
+        // 3) 위치 정보로 일출/일몰 시간 먼저 계산 (다른 API와 무관하므로 먼저 처리)
+        if (locationInfo.latitude && locationInfo.longitude) {
+            const now = new Date();
+            const times = SunCalc.getTimes(now, locationInfo.latitude, locationInfo.longitude);
+            setDaylightInfo({ sunrise: times.sunrise, sunset: times.sunset });
+        }
+
+        // ✨ --- 핵심 수정 --- ✨
+        // 4) 서로 의존하지 않는 API들을 병렬로 동시에 호출합니다.
+        const [pastDataResult, weatherApisResult] = await Promise.allSettled([
+            fetchPastTemperature(locationInfo.stationId),      // 과거 날씨
+            fetchWeatherDataApis(locationInfo),                // 현재 날씨, 자외선, 미세먼지
+        ]);
+
+        // 5) 병렬 호출 결과를 처리합니다.
+        
+        // 5-1. 계절 정보 처리
+        if (pastDataResult.status === 'fulfilled' && pastDataResult.value) {
+            
+            const currentSeason = getSeason(pastDataResult.value);
+            if (currentSeason) {
+                setSeason(currentSeason);
+            } else {
+                setSeason('summer');
+                console.warn("계절 판단 실패. 기본값 'summer'를 사용합니다.");
+                setToastMessage('과거 날씨 정보가 부족해, 현재 계절(여름) 기준으로 추천합니다.');
+            }
+        } else {
+            setSeason('summer');
+            setToastMessage('과거 날씨 정보를 가져오는 데 실패했습니다.');
+            console.error("과거 날씨 조회 중 에러:", pastDataResult.reason);
+        }
+        
+        // 5-2. 현재 날씨 정보 처리
+        if (weatherApisResult.status === 'rejected' || !weatherApisResult.value.weatherResult) {
+            setToastMessage(`날씨 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
+            throw new Error('Failed to fetch essential weather data.');
+        }
+        const { weatherResult, uvResult, airResult } = weatherApisResult.value;
+
+        // 6) 모든 데이터를 병합하여 최종 날씨 객체 생성
+        const mergedList = mergeAllWeatherData(weatherResult, uvResult, airResult, cached.weather);
+        const finalWeatherData = {
+            ...weatherResult,
+            city: { ...weatherResult.city, name: locationInfo.currentCity },
+            list: mergedList,
+        };
+        setWeatherData(finalWeatherData);
+        
+        // 7) 플랩 매치 정보 업데이트 (날씨 정보가 필요하므로 이 단계에서 호출)
+        const newPlabMatches = await fetchPlabMatches(finalWeatherData.list, locationInfo.regionId, locationInfo.cities);
+        if (newPlabMatches) {
+            setPlabMatches(newPlabMatches);
+        } else {
+            setToastMessage(`플랩 매치 정보 업데이트 실패. (최근: ${cached.time || '없음'})`);
+        }
+        
+        // 8) 성공적으로 가져온 최신 데이터를 캐시에 저장
+        await updateCache(finalWeatherData, newPlabMatches || cached.plab, setLastUpdateTime);
+
+    } catch (err) {
+        setErrorMsg(err.message);
+        console.error(err);
+    } finally {
+        setIsLoading(false);
+    }
+}, []);
 
     useEffect(() => {
         loadAllData();

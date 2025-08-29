@@ -65,3 +65,30 @@ export const getBestExerciseTimes = (weatherList, season) => {
         .sort((a, b) => b.totalScore - a.totalScore)
         .slice(0, 50);
 };
+
+/**
+ * 특정 시간의 각 날씨 요소별 점수와 가중치가 적용된 총점을 계산하여 객체로 반환합니다.
+ * exclusionConditions(-1 처리)를 적용하지 않습니다.
+ * @param {object} data - 시간별 날씨 데이터
+ * @param {object} weights - 계절별 가중치
+ * @param {string} season - 현재 계절
+ * @returns {object} - 각 요소별 점수(예: tempScore)와 최종 점수(totalScore)가 포함된 객체
+ */
+export function getScoreDetailsForHour(data, weights, season) {
+  const scoreDetails = {};
+  let totalWeightedScore = 0;
+
+  for (const key in weights) {
+    if (scoringRules[key]) {
+      const score = scoringRules[key](data, season);
+      if (score !== null && score !== undefined) {
+        // 예: 'temp'에 대한 점수는 'tempScore'라는 키로 저장
+        scoreDetails[`${key}Score`] = score;
+        totalWeightedScore += score * weights[key];
+      }
+    }
+  }
+
+  scoreDetails.totalScore = totalWeightedScore;
+  return scoreDetails;
+}

@@ -17,7 +17,8 @@ const WeatherCard = ({ weatherItem }) => {
   
   // 2. 데이터 가공
   const date = new Date(dt * 1000);
-  const timeStr = `${date.getMonth() + 1}월 ${date.getDate()}일 ${date.getHours()}시`;
+  const dayOfWeek = date.toLocaleString('ko-KR', { weekday: 'short' }); // '월', '화' 등 요일 추출
+  const timeStr = `${date.getMonth() + 1}월 ${date.getDate()}일 ${dayOfWeek}요일 ${date.getHours()}시`; // 요일을 문자열에 추가
   const weather = formatWeather(sky, pty);
   const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
 

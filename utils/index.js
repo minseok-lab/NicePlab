@@ -9,3 +9,4 @@ export * from './locationUtils';
 export * from './plabLevelFormatter';
 export * from './uvForcastDataParser';
 export * from './weatherFormatter';
+export * from './airQualityFormatter';

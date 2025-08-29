@@ -17,18 +17,14 @@ export const PALETTE = {
   cardShadow: '#000',
   transparentCard: 'rgba(255, 255, 255, 1)',
   
-  // 점수 및 상태 색상
-  scoreGood: '#0040D3',
-  scoreModerate: '#35B847',
-  scoreWarning: '#FBCE33',
-  scoreBad: '#E16F24',
-  scoreVeryBad: '#C60F14',
-  scoreDefault: '#888',
-  scoreHighlight: '#FF7F00', // 주황색 점수 박스
+  // ✨ [수정] 상태(Status) 색상을 여기에 통합하여 관리합니다.
+  statusGood: '#0040D3',      // 좋음 (파랑)
+  statusModerate: '#35B847', // 보통 (초록)
+  statusWarning: '#FBCE33',  // 경고 (노랑)
+  statusBad: '#E16F24',      // 나쁨 (주황)
+  statusVeryBad: '#C60F14',  // 매우 나쁨 (빨강)
 
   // 기타 색상
-  uvBlue: '#007BFF',
-  dustGreen: '#28A745',
   error: 'red',
   border: '#aaa',
 };

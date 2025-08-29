@@ -93,9 +93,9 @@ function getKmaAreaInfo(coords) {
 }
 
 function findPlabRegionInfo(address) {
-    // ... (기존 findPlabRegionInfo 함수 내용 그대로)
     const { region, city, district } = address;
-    const currentCity = city || district;
+    // '구'가 있으면 '구'를 우선 사용, 없으면 '시'를 사용 (예: 서울시 구로구, 수원시 장안구)
+    const currentCity = district || city; 
 
     if (!region || !currentCity) {
         return null;
@@ -114,16 +114,30 @@ function findPlabRegionInfo(address) {
         return null;
     }
 
-    const cityNameForSearch = currentCity.replace(/[시군구]$/, '');
-    const foundArea = foundGroup.areas.find(area =>
-        area.area_name.includes(cityNameForSearch)
+    // ✨ 1. 유연한 비교를 위해 사용자의 현재 위치 이름에서 '시/군/구'를 제거합니다.
+    // 예: '구로구' -> '구로', '수원시' -> '수원'
+    const userCityNormalized = currentCity.replace(/[시군구]$/, '');
+
+    // ✨ 2. 데이터에 있는 지역 이름도 실시간으로 정규화하여 비교합니다.
+    const foundArea = foundGroup.areas.find(area => 
+        area.area_name.some(dataName => {
+            const dataNameNormalized = dataName.replace(/[시군구]$/, '');
+            return dataNameNormalized === userCityNormalized;
+        })
     );
 
     if (!foundArea) {
         return null;
     }
     
-    const citiesInArea = foundArea.area_name.map(name => `${name}시`);
+    // ✨ 3. 사용자의 위치가 '구'로 끝나는지 확인하여 올바른 단위를 결정합니다.
+    const suffix = currentCity.endsWith('구') ? '구' : '시';
+
+    // ✨ 4. 데이터의 모든 지역 이름에서 '시/군/구'를 제거하고 올바른 단위를 붙여줍니다.
+    const citiesInArea = foundArea.area_name.map(name => {
+        const normalizedName = name.replace(/[시군구]$/, '');
+        return `${normalizedName}${suffix}`;
+    });
 
     return {
         regionId: foundGroup.id,

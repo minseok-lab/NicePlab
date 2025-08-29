@@ -1,4 +1,4 @@
-// api/airQualityService.js
+// api/airQualityApi.js
 
 // --- 1. Import Section ---
 // 1) api 호출 경로를 불러옵니다.
@@ -23,7 +23,7 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
 
   const dateString = `${searchDate.getFullYear()}-${String(searchDate.getMonth() + 1).padStart(2, '0')}-${String(searchDate.getDate()).padStart(2, '0')}`;
   const apiRegionName = REGION_NAME_MAP[sidoName] || sidoName;
-  const requestUrl = `${API_ENDPOINTS.AIR_QUALITY}?serviceKey=${AIR_QUALITY_API_KEY}&returnType=json&numOfRows=100&pageNo=1&searchDate=${dateString}&InformCode=${informCode}`;
+  const requestUrl = `${API_ENDPOINTS.AIR_QUALITY_FORCAST}?serviceKey=${AIR_QUALITY_API_KEY}&returnType=json&numOfRows=100&pageNo=1&searchDate=${dateString}&InformCode=${informCode}`;
 
   console.log(`\n--- [${informCode}] 미세먼지 데이터 조회 시작 ---`);
   console.log(`1. 조회 지역: ${sidoName}`);
@@ -66,6 +66,46 @@ export const fetchAirQualityForcast = async (sidoName = '경기') => {
 
   } catch (error) {
     console.error("Failed to fetch Air Quality data:", error);
+    return null;
+  }
+};
+
+
+/**
+ * 기능: 특정 측정소의 현재 미세먼지/초미세먼지 농도를 조회합니다.
+ * @param {string} stationName - 측정소 이름 (예: '종로구')
+ * @returns {Promise<object|null>} - 현재 미세먼지/초미세먼지 정보 또는 null
+*/
+export const fetchCurrentAirQuality = async (stationName = '종로구') => {
+  // '측정소별 실시간 측정정보 조회' API 엔드포인트가 필요합니다.
+  // constants/links.js 파일에 추가해야 할 수 있습니다. (예: REAL_TIME_AIR_QUALITY)
+  const requestUrl = `${API_ENDPOINTS.AIR_QUALITY_LIVE}?serviceKey=${AIR_QUALITY_API_KEY}&returnType=json&numOfRows=1&pageNo=1&stationName=${encodeURIComponent(stationName)}&dataTerm=DAILY&ver=1.3`;
+
+  console.log(`\n--- [현재값] 미세먼지 데이터 조회 시작 ---`);
+  console.log(`1. 조회 측정소: ${stationName}`);
+
+  try {
+    const data = await apiClient(requestUrl, `현재 미세먼지`);
+    
+    // API 응답에서 가장 최신 데이터를 가져옵니다.
+    const latestData = data?.response?.body?.items?.[0];
+
+    if (latestData) {
+      console.log(`2. '${stationName}' 측정소의 현재 데이터:`, latestData);
+      console.log(`--- [현재값] 조회 성공 ---`);
+      
+      return {
+        // 값이 '-' (측정기 점검 등)인 경우 '정보없음'으로 처리
+        pm10Value: latestData.pm10Value !== '-' ? latestData.pm10Value : '정보없음', // 미세먼지 농도
+        pm25Value: latestData.pm25Value !== '-' ? latestData.pm25Value : '정보없음', // 초미세먼지 농도
+        dataTime: latestData.dataTime, // 측정 시간
+      };
+    } else {
+      console.log(`--- [현재값] 조회 실패: 데이터 없음 ---`);
+      return null;
+    }
+  } catch (error) {
+    console.error("Failed to fetch Current Air Quality data:", error);
     return null;
   }
 };
