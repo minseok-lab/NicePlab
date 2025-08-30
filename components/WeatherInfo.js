@@ -1,149 +1,127 @@
 // components/WeatherInfo.js
 
-// --- 1. Import Section ---
-// 1) React 및 React Native 핵심 라이브러리
+// --- 1. Import Section (변경 없음) ---
 import { useState, useMemo } from 'react';
 import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react-native';
-
-// 2) API 라이브러리
 import { fetchPlabMatchDetails } from '../api/plabApi';
-
-// 3) 유틸리티 및 상수 라이브러리
 import { getBestExerciseTimes } from '../utils';
-
-// 4) 스타일
 import { globalStyles, forcastCardStyles } from '../styles';
-
-// 5) 컴포넌트
 import WeatherCard from './WeatherCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 
 // --- Main Component ---
-const WeatherInfo = ({ weatherData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
+const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
 
-  // --- State ---
-  const [expandedTimestamp, setExpandedTimestamp] = useState(null); // ✨ [정의명 통일] 펼쳐진 카드의 timestamp
-  const [detailedMatches, setDetailedMatches] = useState({}); // 시간대별 상세 매치 정보
-  const [loadingTimestamps, setLoadingTimestamps] = useState(new Set()); // ✨ [정의명 통일] 로딩 중인 timestamp Set
+  // --- State (변경 없음) ---
+  const [expandedTimestamp, setExpandedTimestamp] = useState(null);
+  const [detailedMatches, setDetailedMatches] = useState({});
+  const [loadingTimestamps, setLoadingTimestamps] = useState(new Set());
 
-  // --- Memoized Data Processing ---
-
-  // [개선] 3단계 로직을 하나의 useMemo로 통합하여 성능 및 가독성 향상
+  // --- 💡 [개선] Memoized Data Processing ---
   const finalRecommendedSlots = useMemo(() => {
-    // 1. 계산에 필요한 데이터가 준비되지 않았다면 즉시 빈 배열을 반환합니다.
+    // 1. 데이터가 준비되지 않았다면 즉시 빈 배열 반환 (변경 없음)
     if (!weatherData?.list || !season || !plabMatches) {
       return [];
     }
 
-    // 2. 날씨 점수 기반 상위 20개 추천 시간대 후보를 먼저 선정합니다.
+    // 💡 2. [최적화] plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
+    // 이렇게 하면 매번 전체 배열을 순회할 필요가 없습니다.
+    const matchesByHour = new Map();
+    plabMatches.forEach(match => {
+      const matchDate = new Date(match.schedule);
+      // 'YYYY-MM-DDTHH:00:00.000Z' 형태로 시간 키를 정규화합니다.
+      const hourKey = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate(), matchDate.getHours()).toISOString();
+      if (!matchesByHour.has(hourKey)) {
+        matchesByHour.set(hourKey, []);
+      }
+      matchesByHour.get(hourKey).push(match);
+    });
+
+    // 3. 날씨 점수 기반 상위 후보 선정 (변경 없음)
     const bestWeatherCandidates = getBestExerciseTimes(weatherData.list, season).slice(0, 25);
 
-    // 3. 최종 추천 목록 (매치가 있는 시간대)을 담을 배열입니다.
-    const filtered = [];
+    const filteredWithMatches = [];
 
     // 4. 날씨 좋은 시간대 후보를 순회합니다.
     for (const weatherItem of bestWeatherCandidates) {
       const slotStartTime = new Date(weatherItem.dt * 1000);
-      const slotEndTime = new Date(slotStartTime.getTime() + 60 * 60 * 1000);
+      const hourKey = slotStartTime.toISOString();
 
-      // 5. 해당 시간대에 매치가 '하나라도 있는지' 확인합니다. (시간 필터 제외)
-      // .some()을 사용해 매치를 찾는 즉시 순회를 멈춰 효율적입니다.
-      const hasMatchInSlot = plabMatches.some(match => {
-        const matchStartTime = new Date(match.schedule);
-        return matchStartTime >= slotStartTime && matchStartTime < slotEndTime;
-      });
-
-      // 6. 매치가 있다면, 최종 목록에 추가합니다.
-      if (hasMatchInSlot) {
-        filtered.push(weatherItem);
+      // 💡 5. [최적화] Map에서 O(1) 시간 복잡도로 해당 시간대의 매치를 즉시 조회합니다.
+      if (matchesByHour.has(hourKey)) {
+        // 💡 6. [로직 개선] 매치가 있다면, 날씨 정보에 매치 목록을 포함시켜 최종 목록에 추가합니다.
+        filteredWithMatches.push({
+          ...weatherItem,
+          matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함!
+        });
       }
       
-      // 7. 최종 목록이 7개가 채워지면, 더 이상 불필요한 계산을 하지 않고 즉시 종료합니다.
-      if (filtered.length === 7) {
+      // 7. 최종 목록이 7개가 채워지면 종료 (변경 없음)
+      if (filteredWithMatches.length === 7) {
         break;
       }
     }
 
-    return filtered;
-  }, [weatherData, season, plabMatches]); // 모든 의존성을 명시합니다.
+    return filteredWithMatches;
+  }, [weatherData, season, plabMatches]);
 
 
-  // --- Event Handlers ---
-
-// 카드 펼치기/접기 및 상세 정보 비동기 로드 핸들러
-const handleToggleCard = async (timestamp) => {
-  // 이미 열려있는 카드를 다시 누르면 닫기
-  if (expandedTimestamp === timestamp) {
-    setExpandedTimestamp(null);
-    return;
-  }
-
-  // 새 카드 열기
-  setExpandedTimestamp(timestamp);
-  
-  //    전체 plabMatches 목록에서 현재 시간대에 맞는 매치를 직접 필터링합니다.
-  const slotStartTime = new Date(timestamp * 1000);
-  const slotEndTime = new Date(slotStartTime.getTime() + 60 * 60 * 1000);
-  
-  const matchesToFetch = plabMatches.filter(match => {
-    const matchStartTime = new Date(match.schedule);
-    return matchStartTime >= slotStartTime && matchStartTime < slotEndTime;
-  });
-
-  // 이미 데이터가 있거나, 해당 시간대에 매치가 없으면 API 호출 방지
-  if (detailedMatches[timestamp] || matchesToFetch.length === 0) {
-    return;
-  }
-
-  // 로딩 상태 시작
-  setLoadingTimestamps(prev => new Set(prev).add(timestamp));
-
-  try {
-    const detailPromises = matchesToFetch.map(match => fetchPlabMatchDetails(match.id));
-    const results = await Promise.all(detailPromises);
+  // --- 💡 [개선] Event Handlers ---
+  const handleToggleCard = async (timestamp, matchesToFetch) => {
+    if (expandedTimestamp === timestamp) {
+      setExpandedTimestamp(null);
+      return;
+    }
+    setExpandedTimestamp(timestamp);
     
-    // 상세 정보 state에 저장 (null 값 제외)
-    setDetailedMatches(prev => ({ ...prev, [timestamp]: results.filter(Boolean) }));
-  } catch (error) {
-    console.error("Failed to fetch match details:", error);
-  } finally {
-    // 로딩 상태 종료
-    setLoadingTimestamps(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(timestamp);
-      return newSet;
-    });
-  }
-};
+    // 💡 [로직 개선] 더 이상 plabMatches를 필터링할 필요 없이,
+    // 클릭된 항목에 포함된 matchesToFetch를 바로 사용합니다.
+    if (detailedMatches[timestamp] || !matchesToFetch || matchesToFetch.length === 0) {
+      return;
+    }
+
+    setLoadingTimestamps(prev => new Set(prev).add(timestamp));
+    try {
+      const detailPromises = matchesToFetch.map(match => fetchPlabMatchDetails(match.id));
+      const results = await Promise.all(detailPromises);
+      setDetailedMatches(prev => ({ ...prev, [timestamp]: results.filter(Boolean) }));
+    } catch (error) {
+      console.error("Failed to fetch match details:", error);
+    } finally {
+      setLoadingTimestamps(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(timestamp);
+        return newSet;
+      });
+    }
+  };
 
   // --- Render ---
   return (
     <ScrollView>
-      <LiveWeatherCard />
-      
-      {/* [추가] LiveWeatherCard와 아래 추천 목록 사이에 구분을 위한 헤더를 추가하면 더 좋습니다. */}
-      <Text style={globalStyles.subHeader}>추천 시간대별 경기</Text>
+      <LiveWeatherCard liveData={liveData} />
+      <Text style={globalStyles.subHeader}>추천 시간대 TOP 7</Text>
       
       {finalRecommendedSlots.length > 0 ? (
         finalRecommendedSlots.map((weatherItem) => {
-          const { dt: timestamp, matches } = weatherItem; // ❗ weatherItem에서 matches를 바로 가져옵니다.
+          // 💡 [오류 수정] 이제 weatherItem에서 matches를 정상적으로 가져올 수 있습니다.
+          const { dt: timestamp, matches } = weatherItem;
           const isExpanded = expandedTimestamp === timestamp;
           const isLoading = loadingTimestamps.has(timestamp);
-          const matchesForThisSlot = detailedMatches[timestamp] || matches || [];
           
+          // 💡 [로직 개선] 상세 정보가 로딩되기 전에는 weatherItem에 포함된 기본 매치 정보를 사용합니다.
+          const matchesForThisSlot = detailedMatches[timestamp] || matches;
+
           return (
-            // TouchableOpacity가 카드 전체를 감싸고, 클릭 이벤트를 관리합니다.
             <TouchableOpacity 
               key={timestamp} 
               style={forcastCardStyles.cardContainer}
-              onPress={() => handleToggleCard(timestamp)}
+              // 💡 [로직 개선] 핸들러에 클릭된 카드의 기본 매치 정보를 함께 넘겨줍니다.
+              onPress={() => handleToggleCard(timestamp, matches)}
               activeOpacity={0.8}
             >
-              {/* 1. 날씨 정보 렌더링은 WeatherCard에 위임 */}
               <WeatherCard weatherItem={weatherItem} />
-              
-              {/* 2. 펼쳐졌을 때, 매치 정보 렌더링은 MatchDetails에 위임 */}
               {isExpanded && (
                 <MatchDetails 
                   isLoading={isLoading}
@@ -157,7 +135,7 @@ const handleToggleCard = async (timestamp) => {
         <Text style={globalStyles.noDataText}>추천할 만한 시간대가 없네요.</Text>
       )}
 
-      {/* 하단 버튼 및 푸터 */}
+      {/* 하단 버튼 및 푸터 (변경 없음) */}
       <View style={globalStyles.buttonContainer}>
         <Button 
           title="플랩에서 더 많은 매치 찾기" 
@@ -171,7 +149,6 @@ const handleToggleCard = async (timestamp) => {
         <Text style={globalStyles.footerText}> </Text>
         <Text style={globalStyles.footerText}>플랩 매치 출처: 플랩풋볼</Text>
         <Text style={globalStyles.footerText}>Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.</Text>
-        <Text style={globalStyles.footerText}> </Text>
         <Text style={globalStyles.footerText}> </Text>
       </View>
     </ScrollView>

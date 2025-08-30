@@ -8,8 +8,7 @@ import { apiClient } from './apiClient';
 import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants/links';
 
 
-
-async function fetchAllPagesForDate(dateString, regionId) {
+async function fetchAllPagesForDate(dateString, regionId, cities) {
   // ... (이 함수는 변경 없음) ...
   let requestUrl = `${PLAB_API_URL}?ordering=schedule&sch=${dateString}&region=${regionId}&page_size=100`;
   let matchesForDate = [];
@@ -32,6 +31,7 @@ async function fetchAllPagesForDate(dateString, regionId) {
 
 // *** 수정된 부분: city 대신 cities 배열을 받습니다. ***
 export const fetchPlabMatches = async (weatherList, regionId, cities) => {
+  console.log(`⚽️ [플랩 API] 요청 지역: regionId=${regionId}, cities=${cities.join(', ')}`);
   if (!weatherList || weatherList.length === 0) return [];
 
   const uniqueDates = [...new Set(weatherList.map(item => {
@@ -43,7 +43,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
   }))];
 
   try {
-    const promises = uniqueDates.map(dateString => fetchAllPagesForDate(dateString, regionId));
+    const promises = uniqueDates.map(dateString => fetchAllPagesForDate(dateString, regionId, cities));
     const resultsByDate = await Promise.all(promises);
     const allMatches = resultsByDate.flat();
 
@@ -92,7 +92,6 @@ export const fetchPlabMatchDetails = async (matchId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error(`Error fetching details for match ${matchId}:`, error);
     return null;
   }
 };

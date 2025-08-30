@@ -6,9 +6,11 @@ import { View, Image, ScrollView, RefreshControl, StatusBar } from 'react-native
 
 // 2) 서드파티 라이브러리
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // 3) 내부 모듈 (Hooks, Constants, Components)
 import { useWeather } from './hooks/useWeather.js';
+import { useDynamicGradient } from './hooks/useDynamicGradient.js'; // <<< 변경: 새로 만든 훅 추가
 import { PLAB_FOOTBALL_URL } from './constants';
 import { WeatherInfo, LoadingIndicator, ErrorMessage, Toast } from './components';
 
@@ -23,8 +25,9 @@ import Logo from './assets/nicePlabLogo.png';
 function AppContent() {
   // 1) 시스템 UI(하단 바 등)에 의해 가려지는 영역의 크기를 가져옵니다.
   const insets = useSafeAreaInsets(); 
-  const { weatherData, errorMsg, isLoading, plabMatches, lastUpdateTime, season, uvBaseDate, refetch, toastMessage, clearToast } = useWeather();
-  
+  const { weatherData, liveData, errorMsg, isLoading, plabMatches, lastUpdateTime, season, refetch, toastMessage, clearToast } = useWeather();
+  const { colors, statusBar } = useDynamicGradient(); // <<< 변경: 그라데이션 훅 호출
+
   // ✨ 개선안 1: 'refreshing' 상태와 'onRefresh' 함수를 제거합니다.
   // isLoading과 refetch를 RefreshControl에서 직접 사용해 상태 관리를 통합합니다.
 
@@ -33,8 +36,11 @@ function AppContent() {
   // --- 3. 화면에 보여줄 UI(사용자 인터페이스)를 렌더링하는 부분 ---
   return (
     // 1) View에 동적으로 paddingBottom을 적용하여 하단 바 영역을 확보합니다.
-    <View style={[styles.container, { paddingBottom: insets.bottom, flex: 1 }]}>
-      <StatusBar barStyle="dark-content" />
+    <LinearGradient 
+      colors={colors} 
+      style={[styles.container, { paddingBottom: insets.bottom, flex: 1 }]}
+    >
+      <StatusBar barStyle={statusBar} />
       <Image 
         source={Logo} 
         style={styles.logo}
@@ -48,17 +54,17 @@ function AppContent() {
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       >
         {/* ✨ 개선안 2 적용: JSX 내부에서 직접 조건부 렌더링을 수행합니다. */}
-        {isLoading && !weatherData ? (
+        {isLoading && !weatherData && !liveData ? ( // [변경] 로딩 조건 구체화
           <LoadingIndicator />
         ) : errorMsg ? (
           <ErrorMessage message={errorMsg} />
         ) : weatherData ? (
           <WeatherInfo 
-            weatherData={weatherData} 
+            weatherData={weatherData}
+            liveData={liveData} // [추가] liveData를 prop으로 전달
             plabMatches={plabMatches} 
             plabLink={PLAB_FOOTBALL_URL} 
             lastUpdateTime={lastUpdateTime} 
-            uvBaseDate={uvBaseDate}
             season={season}
           />
         ) : null}
@@ -66,7 +72,7 @@ function AppContent() {
 
       {/* 3) Toast 메시지 컴포넌트 */}
       <Toast message={toastMessage} onDismiss={clearToast} />
-    </View>
+    </LinearGradient>
   );
 }
 

@@ -6,7 +6,6 @@ export const globalStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 48,
-    backgroundColor: PALETTE.background,
   },
   logo: {
     width: 168.5,

@@ -69,7 +69,7 @@ function findClosestAreaCode(grid) {
 
 // --- 3. 위치 정보 처리 함수들 (기존 코드와 동일) ---
 
-async function getUserLocationAndAddress() {
+export async function getUserLocationAndAddress() {
     // ... (기존 getUserLocationAndAddress 함수 내용 그대로)
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -94,59 +94,56 @@ function getKmaAreaInfo(coords) {
 }
 
 function findPlabRegionInfo(address) {
-    const { region, city, district } = address;
-    // '구'가 있으면 '구'를 우선 사용, 없으면 '시'를 사용 (예: 서울시 구로구, 수원시 장안구)
-    const currentCity = district || city; 
+  console.log("📍[디버깅] findPlabRegionInfo가 받은 주소:", JSON.stringify(address, null, 2));
+  const { region, city, district } = address;
+  
+  // 👇 [수정] city를 district보다 우선적으로 사용하도록 순서를 변경합니다.
+  const currentCity = city || district; 
 
-    if (!region || !currentCity) {
-        return null;
-    }
+  if (!region || !currentCity) {
+    return null;
+  }
 
-    let airQualityRegion = region;
-    if (region === '경기도') {
-        airQualityRegion = GYEONGGI_BUKBU_CITIES.includes(currentCity) ? '경기북부' : '경기남부';
-    }
+  let airQualityRegion = region;
+  if (region === '경기도') {
+    airQualityRegion = GYEONGGI_BUKBU_CITIES.includes(currentCity) ? '경기북부' : '경기남부';
+  }
 
-    const foundGroup = PLAB_REGIONS.find(group =>
-        region.includes(group.area_group_name.substring(0, 2))
-    );
+  const foundGroup = PLAB_REGIONS.find(group =>
+    region.includes(group.area_group_name.substring(0, 2))
+  );
 
-    if (!foundGroup) {
-        return null;
-    }
+  if (!foundGroup) {
+    return null;
+  }
 
-    // ✨ 1. 유연한 비교를 위해 사용자의 현재 위치 이름에서 '시/군/구'를 제거합니다.
-    // 예: '구로구' -> '구로', '수원시' -> '수원'
-    const userCityNormalized = currentCity.replace(/[시군구]$/, '');
+  const userCityNormalized = currentCity.replace(/[시군구]$/, '');
 
-    // ✨ 2. 데이터에 있는 지역 이름도 실시간으로 정규화하여 비교합니다.
-    const foundArea = foundGroup.areas.find(area => 
-        area.area_name.some(dataName => {
-            const dataNameNormalized = dataName.replace(/[시군구]$/, '');
-            return dataNameNormalized === userCityNormalized;
-        })
-    );
+  const foundArea = foundGroup.areas.find(area => 
+    area.area_name.some(dataName => {
+      const dataNameNormalized = dataName.replace(/[시군구]$/, '');
+      return dataNameNormalized === userCityNormalized;
+    })
+  );
 
-    if (!foundArea) {
-        return null;
-    }
-    
-    // ✨ 3. 사용자의 위치가 '구'로 끝나는지 확인하여 올바른 단위를 결정합니다.
-    const suffix = currentCity.endsWith('구') ? '구' : '시';
+  if (!foundArea) {
+    return null;
+  }
+  
+  const suffix = currentCity.endsWith('구') ? '구' : '시';
 
-    // ✨ 4. 데이터의 모든 지역 이름에서 '시/군/구'를 제거하고 올바른 단위를 붙여줍니다.
-    const citiesInArea = foundArea.area_name.map(name => {
-        const normalizedName = name.replace(/[시군구]$/, '');
-        return `${normalizedName}${suffix}`;
-    });
+  const citiesInArea = foundArea.area_name.map(name => {
+    const normalizedName = name.replace(/[시군구]$/, '');
+    return `${normalizedName}${suffix}`;
+  });
 
-    return {
-        regionId: foundGroup.id,
-        cities: citiesInArea,
-        currentCity: currentCity,
-        region: region,
-        airQualityRegion: airQualityRegion,
-    };
+  return {
+    regionId: foundGroup.id,
+    cities: citiesInArea,
+    currentCity: currentCity,
+    region: region,
+    airQualityRegion: airQualityRegion,
+  };
 }
 
 // ⭐ 1) 위경도 기반으로 가장 가까운 ASOS 관측소 ID를 찾는 함수
@@ -196,24 +193,24 @@ function findClosestAirQualityStation({ latitude, longitude }) {
 
 // ⭐ 2) GPS 기반 정보 조회 함수 수정 (stationName 추가)
 async function getGpsBasedRegionInfo() {
-  try {
-    const { coords, address } = await getUserLocationAndAddress();
-    const plabInfo = findPlabRegionInfo(address);
-    if (!plabInfo) {
-      throw new Error('Could not find a matching PLAB region for the address.');
-    }
-    const kmaInfo = getKmaAreaInfo(coords);
-    const stationId = findClosestKMAStationId(coords);
+  try {
+    const { coords, address } = await getUserLocationAndAddress();
+    const plabInfo = findPlabRegionInfo(address);
+    if (!plabInfo) {
+      throw new Error('Could not find a matching PLAB region for the address.');
+    }
+    const kmaInfo = getKmaAreaInfo(coords);
+    const stationId = findClosestKMAStationId(coords);
     
     // 👇 [추가] 새로 만든 함수를 호출합니다.
     const { stationName } = findClosestAirQualityStation(coords);
 
     // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
-    return { ...plabInfo, ...kmaInfo, stationId, stationName };
-  } catch (error) {
-    console.error("Failed to get GPS-based region information:", error.message);
-    return null;
-  }
+    return { ...plabInfo, ...kmaInfo, stationId, stationName };
+  } catch (error) {
+    console.error("Failed to get GPS-based region information:", error.message);
+    return null;
+  }
 }
 
 // ⭐ 3) '현재 위치'(안양시) 정보 함수 수정 (stationId 추가)

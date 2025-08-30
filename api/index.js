@@ -6,6 +6,9 @@ export * from './apiClient';
 // 기상청 단기예보 API
 export * from './weatherForcastApi';
 
+// 기상청 실황 날씨 API
+export * from './weatherLiveApi';
+
 // 기상청 생활정보지수(자외선) API
 export * from './uvApi';
 

@@ -91,48 +91,41 @@ function getAirQualityScore(grade) {
     return airQualityGradeMap[grade] ?? 50; // 정보없음 등 예외 케이스는 50점
 }
 
-// 8) 계절별 일광(Daylight) 점수 계산 함수
-function getDaylightScore(dt, sunrise, sunset, season) {
+// 8) SunCalc의 정확한 시간대를 사용하여 일광 점수를 계산합니다.
+/*
+ * @param {number} dt - 확인할 시간의 timestamp
+ * @param {object} daylightInfo - dawn, sunrise, sunset, dusk 시간 정보가 담긴 객체
+ * @returns {number} 일광 점수 (50, 80, 100)
+ */
+function getDaylightScore(dt, daylightInfo) {
+    // daylightInfo가 아직 준비되지 않았으면 기본 점수를 반환합니다.
+    if (!daylightInfo) {
+        return 80; // 또는 100
+    }
 
+    // 1. 필요한 시간들을 모두 가져옵니다.
     const currentTime = dt * 1000;
-    const sunriseTime = sunrise.getTime();
-    const sunsetTime = sunset.getTime();
+    const dawnTime = daylightInfo.dawn.getTime();         // 여명 시작
+    const sunriseTime = daylightInfo.sunrise.getTime();   // 일출
+    const sunsetTime = daylightInfo.sunset.getTime();     // 일몰
+    const duskTime = daylightInfo.dusk.getTime();         // 황혼 종료
 
-    let twilightBuffer; // 계절별로 달라지는 여명/황혼 시간 버퍼 (단위: 밀리초)
-
-    // 1. 계절에 따라 '어둑어둑한 시간'의 길이를 다르게 설정
-    switch (season) {
-        // 여름에는 해가 진 후에도 한동안 밝음
-        case 'summer':
-            twilightBuffer = 60 * 60 * 1000; // 60분
-            break;
-        
-        // 겨울에는 해가 지면 금방 어두워짐
-        case 'winter':
-            twilightBuffer = 30 * 60 * 1000; // 30분
-            break;
-
-        // 봄, 가을은 중간값
-        case 'spring':
-        case 'autumn':
-        default:
-            twilightBuffer = 45 * 60 * 1000; // 45분
-            break;
-    }
-
-    // 2. 설정된 버퍼를 기준으로 점수 계산
-    // 완전한 밤 (해가 뜨기 전 또는 지고 난 한참 뒤)
-    if (currentTime < sunriseTime - twilightBuffer || currentTime > sunsetTime + twilightBuffer) {
-        return 50; // 안전을 위해 0점
-    }
+    // 2. 시간대에 따라 점수를 반환합니다.
     
-    // 완전한 낮 (해가 떠 있는 동안)
+    // 완전한 낮 (일출 ~ 일몰)
     if (currentTime >= sunriseTime && currentTime <= sunsetTime) {
         return 100;
     }
 
-    // 그 외 어둑어둑한 시간 (여명/황혼)
-    return 80;
+    // 어둑어둑한 시간 (여명 또는 황혼)
+    // (여명 시작 ~ 일출 전) OR (일몰 후 ~ 황혼 종료)
+    if ((currentTime >= dawnTime && currentTime < sunriseTime) || 
+        (currentTime > sunsetTime && currentTime <= duskTime)) {
+        return 80;
+    }
+
+    // 그 외 시간은 모두 완전한 밤으로 간주합니다.
+    return 50;
 }
 
 /**

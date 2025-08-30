@@ -16,8 +16,16 @@ export const PALETTE = {
   cardBackground: '#eeeeeeff',
   cardShadow: '#000',
   transparentCard: 'rgba(255, 255, 255, 1)',
+
+  // 동적 배경 그라데이션 색상
+  gradient: {
+    sunrise: { start: '#E96443', end: '#61CBF4' }, // 일출
+    day:     { start: '#468DD9', end: '#61CBF4' }, // 낮
+    sunset:  { start: '#F3904F', end: '#5F6B9E' }, // 일몰
+    night:   { start: '#0F2027', end: '#5F6B9E' }  // 밤
+  },
   
-  // ✨ [수정] 상태(Status) 색상을 여기에 통합하여 관리합니다.
+  // 상태(Status) 색상을 여기에 통합하여 관리합니다.
   statusGood: '#0040D3',      // 좋음 (파랑)
   statusModerate: '#35B847', // 보통 (초록)
   statusWarning: '#FBCE33',  // 경고 (노랑)
