@@ -36,15 +36,21 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
 
     if (dailyForecast) {
       const grades = dailyForecast.informGrade.split(',').map(s => s.trim());
-      const regionGrade = grades.find(g => g.startsWith(apiRegionName));
-      const gradeValue = regionGrade ? regionGrade.split(' : ')[1] : '정보없음';
-      
-      console.log(`2. '${sidoName}' 지역의 예보 등급:`, gradeValue);
-      console.log(`--- [${informCode}] 조회 성공 ---`);
-      return gradeValue;
+        for (const gradeInfo of grades) {
+        const parts = gradeInfo.split(' : '); // ' : ' 기준으로 지역과 등급 분리
+        if (parts.length === 2) {
+          const region = parts[0].trim();
+          const grade = parts[1].trim();
+          
+          if (region === apiRegionName) {
+            console.log(`2. '${sidoName}' 지역의 예보 등급:`, grade);
+            console.log(`--- [${informCode}] 조회 성공 ---`);
+            return grade; // 일치하는 지역을 찾으면 바로 등급을 반환
+          }
+        }
+      }
     }
-  }
-  
+  }  
   console.log(`--- [${informCode}] 조회 실패: 데이터 없음 ---`);
   return '정보없음';
 };

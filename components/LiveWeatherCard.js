@@ -1,7 +1,7 @@
 // components/LiveWeatherCard.js
 
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 
 // --- 스타일 및 유틸리티 ---
 import { liveCardStyles as styles } from '../styles';
@@ -109,6 +109,12 @@ const LiveWeatherCard = () => {
     loadAllLiveData();
   }, [season]);
 
+  const handleCardPress = () => {
+    const url = "https://weather.naver.com/today/";
+    // Linking.openURL을 사용해 외부 브라우저로 URL을 엽니다.
+    Linking.openURL(url).catch(err => console.error("URL을 여는 데 실패했습니다.", err));
+  };
+
   // --- 렌더링 로직 ---
 
   if (isLoading) {
@@ -136,41 +142,43 @@ const LiveWeatherCard = () => {
   const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
 
   return (
-    <View style={styles.cardContainer}>
-      {/* 상단: 지역명, 현재 시간, 점수 */}
-      <View style={styles.header}>
-        <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>🗺️ {locationName}</Text>
-            <Text style={styles.dateText}>{currentDisplayDateTime}</Text>
+    <TouchableOpacity onPress={handleCardPress} activeOpacity={0.8}>
+      <View style={styles.cardContainer}>
+        {/* 상단: 지역명, 현재 시간, 점수 */}
+        <View style={styles.header}>
+          <View style={styles.locationContainer}>
+              <Text style={styles.locationText}>🗺️ {locationName}</Text>
+              <Text style={styles.dateText}>{currentDisplayDateTime}</Text>
+          </View>
+          <View style={[styles.scoreBox, { backgroundColor: getScoreColor(totalScore) }]}>
+            <Text style={styles.scoreText}>{totalScore.toFixed(1)}</Text>
+          </View>
         </View>
-        <View style={[styles.scoreBox, { backgroundColor: getScoreColor(totalScore) }]}>
-          <Text style={styles.scoreText}>{totalScore.toFixed(1)}</Text>
-        </View>
-      </View>
 
-      {/* 하단: 상세 날씨 정보 */}
-      <View style={styles.content}>
-        <View style={styles.weatherColumn}>
-          <Text style={styles.tempText}>{Math.round(temp)}°</Text>
-          <Image source={weather.icon} style={styles.icon} />
-        </View>
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailLabels}>
-            <Text style={styles.detailLabelsText}>습도</Text>
-            <Text style={styles.detailLabelsText}>UV</Text>
-            <Text style={styles.detailLabelsText}>미세먼지</Text>
-            <Text style={styles.detailLabelsText}>초미세먼지</Text>
+        {/* 하단: 상세 날씨 정보 */}
+        <View style={styles.content}>
+          <View style={styles.weatherColumn}>
+            <Text style={styles.tempText}>{Math.round(temp)}°</Text>
+            <Image source={weather.icon} style={styles.icon} />
           </View>
-          <View style={styles.detailValues}>
-            <Text style={styles.detailValuesText}>{humidity}%</Text>
-            {/* 👇 [수정] getUvColor와 getDustColor 함수를 사용하여 동적 스타일 적용 */}
-            <Text style={[styles.detailValuesText, { color: getUvColor(validUvIndex) }]}>{uvIndex}</Text>
-            <Text style={[styles.detailValuesText, { color: getDustColor(pm10Grade) }]}>{pm10Grade}</Text>
-            <Text style={[styles.detailValuesText, { color: getDustColor(pm25Grade) }]}>{pm25Grade}</Text>
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailLabels}>
+              <Text style={styles.detailLabelsText}>습도</Text>
+              <Text style={styles.detailLabelsText}>UV</Text>
+              <Text style={styles.detailLabelsText}>미세먼지</Text>
+              <Text style={styles.detailLabelsText}>초미세먼지</Text>
+            </View>
+            <View style={styles.detailValues}>
+              <Text style={styles.detailValuesText}>{humidity}%</Text>
+              {/* 👇 [수정] getUvColor와 getDustColor 함수를 사용하여 동적 스타일 적용 */}
+              <Text style={[styles.detailValuesText, { color: getUvColor(validUvIndex) }]}>{uvIndex}</Text>
+              <Text style={[styles.detailValuesText, { color: getDustColor(pm10Grade) }]}>{pm10Grade}</Text>
+              <Text style={[styles.detailValuesText, { color: getDustColor(pm25Grade) }]}>{pm25Grade}</Text>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

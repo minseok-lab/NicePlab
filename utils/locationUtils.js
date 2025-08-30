@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import { PLAB_REGIONS, KMA_AREA_CODES } from '../constants';
 import { GYEONGGI_BUKBU_CITIES } from '../constants/gyeonggiRegions';
 import { ASOS_STATIONS } from '../constants/kmaAsosStations';
+import { AIR_KOREA_STATIONS } from '../constants/airKoreaStations';
 
 // --- 2. 좌표 변환 및 지역 코드 검색 함수들 (기존 코드와 동일) ---
 
@@ -149,7 +150,7 @@ function findPlabRegionInfo(address) {
 }
 
 // ⭐ 1) 위경도 기반으로 가장 가까운 ASOS 관측소 ID를 찾는 함수
-function findClosestStationId({ latitude, longitude }) {
+function findClosestKMAStationId({ latitude, longitude }) {
   let closestStation = null;
   let minDistance = Infinity;
 
@@ -166,22 +167,53 @@ function findClosestStationId({ latitude, longitude }) {
   return closestStation ? closestStation.id : '119'; // 못찾으면 수원(안양 근처)을 기본값으로
 }
 
-// ⭐ 2) GPS 기반 정보 조회 함수 수정 (stationId 추가)
-async function getGpsBasedRegionInfo() {
-  try {
-    const { coords, address } = await getUserLocationAndAddress();
-    const plabInfo = findPlabRegionInfo(address);
-    if (!plabInfo) {
-      throw new Error('Could not find a matching PLAB region for the address.');
-    }
-    const kmaInfo = getKmaAreaInfo(coords);
-    const stationId = findClosestStationId(coords); // 가장 가까운 관측소 ID 찾기
+// 👇 [추가] 바로 여기에 새 함수를 추가하세요.
+/**
+ * ⭐ (신규) 위경도 기반으로 가장 가까운 대기질 측정소 정보를 찾는 함수
+ * @param {object} coords - { latitude, longitude }
+ * @returns {object} - { stationName: string }
+ */
+function findClosestAirQualityStation({ latitude, longitude }) {
+  let closestStation = null;
+  let minDistance = Infinity;
 
-    return { ...plabInfo, ...kmaInfo, stationId }; // stationId를 결과에 포함
-  } catch (error) {
-    console.error("Failed to get GPS-based region information:", error.message);
-    return null;
+  for (const station of AIR_KOREA_STATIONS) {
+    const dx = latitude - station.lat;
+    const dy = longitude - station.lon;
+    const distance = dx * dx + dy * dy;
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestStation = station;
+    }
   }
+  
+  // 가장 가까운 측정소의 이름을 객체 형태로 반환합니다.
+  return {
+    stationName: closestStation ? closestStation.stationName : '종로구',
+  };
+}
+
+// ⭐ 2) GPS 기반 정보 조회 함수 수정 (stationName 추가)
+async function getGpsBasedRegionInfo() {
+  try {
+    const { coords, address } = await getUserLocationAndAddress();
+    const plabInfo = findPlabRegionInfo(address);
+    if (!plabInfo) {
+      throw new Error('Could not find a matching PLAB region for the address.');
+    }
+    const kmaInfo = getKmaAreaInfo(coords);
+    const stationId = findClosestKMAStationId(coords);
+    
+    // 👇 [추가] 새로 만든 함수를 호출합니다.
+    const { stationName } = findClosestAirQualityStation(coords);
+
+    // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
+    return { ...plabInfo, ...kmaInfo, stationId, stationName };
+  } catch (error) {
+    console.error("Failed to get GPS-based region information:", error.message);
+    return null;
+  }
 }
 
 // ⭐ 3) '현재 위치'(안양시) 정보 함수 수정 (stationId 추가)
@@ -195,6 +227,7 @@ function getCurrentLocationInfo() {
     areaNo: '4117300000',
     grid: { nx: 60, ny: 121 },
     stationId: '119', // 안양시에서 가장 가까운 수원 관측소 ID
+    stationName: '부림동',
   };
 }
 
