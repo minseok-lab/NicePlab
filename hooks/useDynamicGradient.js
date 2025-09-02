@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-import SunCalc from 'suncalc'; // <<< 변경: SunCalc를 import 합니다.
-import { PALETTE } from '../styles/colors';
-import { getUserLocationAndAddress } from '../utils/locationUtils'; 
+import SunCalc from 'suncalc';
+import { PALETTE } from '../styles';
+import { getUserLocationAndAddress } from '../utils'; 
 
 // GRADIENT_SETTINGS는 변경사항 없습니다.
 const GRADIENT_SETTINGS = {

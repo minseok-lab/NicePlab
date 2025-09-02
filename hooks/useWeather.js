@@ -17,10 +17,13 @@ import {
 } from '../api';
 
 // Utils
-import { getWeatherLocationInfo, getDefaultRegionInfo } from '../utils/locationUtils';
-import { getSeason } from '../utils/getSeason';
-import { getScoreDetailsForHour } from '../utils/exercise/scoreCalculator';
-import { getDustGradeFromValue } from '../utils';
+import {
+  getWeatherLocationInfo,
+  getDefaultRegionInfo,
+  getSeason,
+  getDustGradeFromValue,
+  getScoreDetailsForHour
+} from '../utils';
 import { seasonScoreCriteria } from '../configs/exerciseScoreCriteria';
 
 
@@ -116,45 +119,47 @@ export const useWeather = (locationName = "내 위치") => {
   const [daylightInfo, setDaylightInfo] = useState(null);
 
   const loadAllData = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMsg(null);
-    
-    try {
-      // 1. 캐시에서 데이터 우선 로드
-      const cached = await loadCache({ setWeatherData, setPlabMatches, setLiveData, setLastUpdateTime });
-      
-      // 2. 위치 정보 가져오기
-      const locationInfo = await getWeatherLocationInfo(locationName) || getDefaultRegionInfo();
-      if (!locationInfo) throw new Error('위치 정보를 확인할 수 없습니다.');
-      
-      // 3. 일출/일몰 시간 계산
-      const now = new Date();
-      if (locationInfo.coords) {
-          const times = SunCalc.getTimes(now, locationInfo.coords.latitude, locationInfo.coords.longitude);
-          setDaylightInfo({
-              sunrise: times.sunrise,
-              sunset: times.sunset,
-              dawn: times.dawn,     // 여명 시작
-              dusk: times.dusk      // 황혼 종료
-          });
-      }
+  setIsLoading(true);
+  setErrorMsg(null);
 
-      // 4. 모든 API 병렬 호출
-      const [
-        pastTempRes,
-        forecastRes,
-        liveWeatherRes,
-        currentAirRes,
-        uvForcastRes,
-        airqualityForcastRes
-      ] = await Promise.allSettled([
-        fetchPastTemperature(locationInfo.stationId),
-        fetchKmaWeatherForcast(locationInfo.grid),
-        fetchKmaLiveWeather(locationInfo.grid),
-        fetchCurrentAirQuality(locationInfo.stationName),
-        fetchUvIndexForcast(locationInfo.areaNo),
-        fetchAirQualityForcast(locationInfo.airQualityRegion)
-      ]);
+  const fetchLiveAirQualityWithFallback = async (stationList) => {
+    if (!stationList || stationList.length === 0) return null;
+    for (const station of stationList.slice(0, 3)) {
+      console.log(`[현재값] '${station.stationName}' 측정소 정보 조회를 시도합니다.`);
+      const result = await fetchCurrentAirQuality(station.stationName);
+      if (result) return result;
+      console.log(`[현재값] '${station.stationName}' 조회 실패. 다음으로 넘어갑니다.`);
+    }
+    return null;
+  };
+  
+  try {
+    const cached = await loadCache({ setWeatherData, setPlabMatches, setLiveData, setLastUpdateTime });
+    const locationInfo = await getWeatherLocationInfo(locationName) || getDefaultRegionInfo();
+    if (!locationInfo) throw new Error('위치 정보를 확인할 수 없습니다.');
+    
+    const now = new Date();
+    if (locationInfo.coords) {
+      const times = SunCalc.getTimes(now, locationInfo.coords.latitude, location.coords.longitude);
+      setDaylightInfo({ sunrise: times.sunrise, sunset: times.sunset, dawn: times.dawn, dusk: times.dusk });
+    }
+
+    // [개선 1] 실시간 대기질 조회를 Promise.allSettled에 포함시켜 병렬로 실행
+    const [
+      pastTempRes,
+      forecastRes,
+      liveWeatherRes,
+      uvForcastRes,
+      airqualityForcastRes,
+      currentAirRes, // 👈 결과 변수 추가
+    ] = await Promise.allSettled([
+      fetchPastTemperature(locationInfo.stationId),
+      fetchKmaWeatherForcast(locationInfo.grid),
+      fetchKmaLiveWeather(locationInfo.grid),
+      fetchUvIndexForcast(locationInfo.areaNo),
+      fetchAirQualityForcast(locationInfo.airQualityRegion),
+      fetchLiveAirQualityWithFallback(locationInfo.stationList), // 👈 여기에 포함
+    ]);
 
       // 5. API 결과 처리
       // 5-1. 계절 처리
@@ -162,7 +167,6 @@ export const useWeather = (locationName = "내 위치") => {
       const currentSeason = getSeason(pastTemp);
       setSeason(currentSeason);
       
-      // 5-2. 예보 데이터 처리
       const weatherResult = forecastRes.status === 'fulfilled' ? forecastRes.value : cached.weather;
       const uvResult = uvForcastRes.status === 'fulfilled' ? uvForcastRes.value : null;
       const airResult = airqualityForcastRes.status === 'fulfilled' ? airqualityForcastRes.value : null;
@@ -174,9 +178,10 @@ export const useWeather = (locationName = "내 위치") => {
       };
       setWeatherData(finalWeatherData);
       
-      // 5-3. 실시간 데이터 처리
       const liveWeatherResult = liveWeatherRes.status === 'fulfilled' ? liveWeatherRes.value : cached.live;
-      const currentAirResult = currentAirRes.status === 'fulfilled' ? currentAirRes.value : null;
+      const currentAirResult = currentAirRes.status === 'fulfilled' ? currentAirRes.value : null; // 👈 결과 처리
+      
+      let finalLiveData = null; // 👈 [개선 2] 최종 liveData를 저장할 변수 선언
       if (liveWeatherResult) {
         const currentHour = now.getHours();
         const currentUvIndex = uvResult?.hourlyUv?.[currentHour] ?? '정보없음';
@@ -189,21 +194,16 @@ export const useWeather = (locationName = "내 위치") => {
         };
         const weights = seasonScoreCriteria[currentSeason];
         const scores = getScoreDetailsForHour(combined, weights, currentSeason);
-        setLiveData({ ...combined, ...scores });
+        finalLiveData = { ...combined, ...scores }; // 👈 변수에 최종 데이터 할당
+        setLiveData(finalLiveData);
       }
 
-      // 5-4. 플랩 매치 처리
-      // 👇 [핵심 수정] 날씨 예보(finalWeatherData.list)가 준비된 후, plabMatches를 호출합니다.
-      const newPlabMatches = await fetchPlabMatches(
-        finalWeatherData.list, 
-        locationInfo.regionId, 
-        locationInfo.cities
-      );
+      const newPlabMatches = await fetchPlabMatches(finalWeatherData.list, locationInfo.regionId, locationInfo.cities);
       setPlabMatches(newPlabMatches || []);
 
-      // 6. 최신 데이터를 캐시에 저장
       await updateCache(
-        { weatherData: finalWeatherData, plabMatches: newPlabMatches || [], liveData: liveData },
+        // [개선 2] state 대신 새로 만든 변수를 캐시에 저장
+        { weatherData: finalWeatherData, plabMatches: newPlabMatches || [], liveData: finalLiveData },
         { setLastUpdateTime }
       );
       

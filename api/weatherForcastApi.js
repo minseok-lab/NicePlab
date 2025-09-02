@@ -4,7 +4,7 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (contsants)
-import { API_ENDPOINTS, KMA_FORCAST_WEATHER_API_KEY } from '../constants/links';
+import { API_ENDPOINTS, KMA_FORCAST_WEATHER_API_KEY } from '../constants';
 
 
 // --- Main Export Function ---

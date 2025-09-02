@@ -4,7 +4,7 @@ import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-
 import { SvgUri } from 'react-native-svg';
 import { matchDetailsStyles as styles } from '../styles';
 import { getTierFromLevel } from '../utils';
-import { getLevelBadgeUrl } from '../constants/links';
+import { getLevelBadgeUrl } from '../constants';
 
 // --- Helper Functions ---
 const getFallbackGrade = (match) => {

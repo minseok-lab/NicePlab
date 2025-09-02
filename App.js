@@ -18,7 +18,7 @@ import { WeatherInfo, LoadingIndicator, ErrorMessage, Toast } from './components
 import { globalStyles as styles } from './styles';
 
 // 5) 에셋
-import Logo from './assets/nicePlabLogo.png';
+import Logo from './assets/nicePlabLogoBlack.png';
 
 
 // --- 2. App 컴포넌트 ---

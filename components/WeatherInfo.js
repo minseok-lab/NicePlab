@@ -3,7 +3,7 @@
 // --- 1. Import Section (변경 없음) ---
 import { useState, useMemo } from 'react';
 import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react-native';
-import { fetchPlabMatchDetails } from '../api/plabApi';
+import { fetchPlabMatchDetails } from '../api';
 import { getBestExerciseTimes } from '../utils';
 import { globalStyles, forcastCardStyles } from '../styles';
 import WeatherCard from './WeatherCard';

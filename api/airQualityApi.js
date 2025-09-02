@@ -5,8 +5,8 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (constants)
-import { API_ENDPOINTS, AIR_QUALITY_API_KEY } from '../constants/links';
-import { REGION_NAME_MAP } from '../constants/airKoreaRegion';
+import { API_ENDPOINTS, AIR_QUALITY_API_KEY } from '../constants';
+import { REGION_NAME_MAP } from '../constants';
 
 /**
  * 기능: 특정 오염물질(미세/초미세)의 예보 등급을 파싱하는 헬퍼 함수
@@ -97,14 +97,28 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
     const latestData = data?.response?.body?.items?.[0];
 
     if (latestData) {
+      // --- 👇 [핵심 수정] 데이터 유효성 검사 로직 추가 ---
+      // pm10과 pm25 값이 모두 '-' (측정값 없음)이거나 '통신장애' 플래그가 있으면
+      // 유효하지 않은 데이터로 간주하고 실패 처리합니다.
+      if (
+        (latestData.pm10Value === '-' && latestData.pm25Value === '-') ||
+        latestData.pm10Flag === '통신장애' || 
+        latestData.pm25Flag === '통신장애'
+      ) {
+        console.log(`--- [현재값] 조회 실패: '${stationName}' 측정소의 데이터가 유효하지 않습니다 (점검 또는 통신장애). ---`);
+        // ❗️ 실패로 처리하여 다음 측정소를 시도하도록 null 반환
+        return null; 
+      }
+      // --- 👆 여기까지 수정 ---
+
+      // 유효성 검사를 통과한 경우에만 데이터를 반환합니다.
       console.log(`2. '${stationName}' 측정소의 현재 데이터:`, latestData);
       console.log(`--- [현재값] 조회 성공 ---`);
       
       return {
-        // 값이 '-' (측정기 점검 등)인 경우 '정보없음'으로 처리
-        pm10Value: latestData.pm10Value !== '-' ? latestData.pm10Value : '정보없음', // 미세먼지 농도
-        pm25Value: latestData.pm25Value !== '-' ? latestData.pm25Value : '정보없음', // 초미세먼지 농도
-        dataTime: latestData.dataTime, // 측정 시간
+        pm10Value: latestData.pm10Value,
+        pm25Value: latestData.pm25Value,
+        dataTime: latestData.dataTime,
       };
     } else {
       console.log(`--- [현재값] 조회 실패: 데이터 없음 ---`);

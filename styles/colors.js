@@ -19,9 +19,9 @@ export const PALETTE = {
 
   // 동적 배경 그라데이션 색상
   gradient: {
-    sunrise: { start: '#E96443', end: '#61CBF4' }, // 일출
+    sunrise: { start: '#61CBF4', end: '#E96443' }, // 일출
     day:     { start: '#468DD9', end: '#61CBF4' }, // 낮
-    sunset:  { start: '#F3904F', end: '#5F6B9E' }, // 일몰
+    sunset:  { start: '#5F6B9E', end: '#B3717D' }, // 일몰
     night:   { start: '#0F2027', end: '#5F6B9E' }  // 밤
   },
   

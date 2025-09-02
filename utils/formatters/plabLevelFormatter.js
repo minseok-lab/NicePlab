@@ -1,6 +1,6 @@
 // utils/plabLevelFormatter.js
 
-import { PLAB_LEVEL_TIERS } from '../constants';
+import { PLAB_LEVEL_TIERS } from '../../constants';
 
 // '정보 없음' 또는 예외 상황을 위한 기본값 객체
 const UNKNOWN_TIER = { name: '정보 없음', en_name: 'unknown' };

@@ -1,7 +1,7 @@
 // api/weatherLiveApi.js
 
 import { apiClient } from './apiClient';
-import { API_ENDPOINTS, KMA_LIVE_WEATHER_API_KEY } from '../constants/links';
+import { API_ENDPOINTS, KMA_LIVE_WEATHER_API_KEY } from '../constants';
 
 /**
  * 기상청 초단기실황 데이터를 가져옵니다.

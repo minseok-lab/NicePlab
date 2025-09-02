@@ -3,7 +3,7 @@
 // 1. 단 한 줄로 모든 아이콘을 import 합니다.
 // - 가독성: 파일의 의존성이 아이콘 모듈 하나라는 것을 명확히 보여줍니다.
 // - 유지보수성: 아이콘이 추가/삭제 되어도 이 파일은 수정할 필요가 없습니다.
-import * as icons from '../assets/weatherIcon'; // index.js 파일은 생략 가능
+import * as icons from '../../assets/weatherIcon'; // index.js 파일은 생략 가능
 
 // 2. 날씨 데이터 객체는 import한 icons 객체를 사용하도록 수정합니다.
 const WEATHER_CONDITIONS = {

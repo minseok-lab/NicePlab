@@ -164,31 +164,26 @@ function findClosestKMAStationId({ latitude, longitude }) {
   return closestStation ? closestStation.id : '119'; // 못찾으면 수원(안양 근처)을 기본값으로
 }
 
-// 👇 [추가] 바로 여기에 새 함수를 추가하세요.
-/**
- * ⭐ (신규) 위경도 기반으로 가장 가까운 대기질 측정소 정보를 찾는 함수
- * @param {object} coords - { latitude, longitude }
- * @returns {object} - { stationName: string }
- */
-function findClosestAirQualityStation({ latitude, longitude }) {
-  let closestStation = null;
-  let minDistance = Infinity;
 
-  for (const station of AIR_KOREA_STATIONS) {
+/**
+ * ⭐ (수정) 위경도 기반으로 가까운 순서대로 '대기질 측정소 목록'을 반환하는 함수
+ * @param {object} coords - { latitude, longitude }
+ * @returns {Array} - 가까운 순으로 정렬된 측정소 객체 배열
+ */
+function getStationsSortedByDistance({ latitude, longitude }) {
+  // 1. 모든 측정소와의 거리를 계산합니다.
+  const stationsWithDistance = AIR_KOREA_STATIONS.map(station => {
     const dx = latitude - station.lat;
     const dy = longitude - station.lon;
     const distance = dx * dx + dy * dy;
+    return { ...station, distance }; // 기존 station 정보에 거리 추가
+  });
 
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestStation = station;
-    }
-  }
-  
-  // 가장 가까운 측정소의 이름을 객체 형태로 반환합니다.
-  return {
-    stationName: closestStation ? closestStation.stationName : '종로구',
-  };
+  // 2. 거리를 기준으로 오름차순 정렬합니다.
+  stationsWithDistance.sort((a, b) => a.distance - b.distance);
+
+  // 3. 정렬된 목록 전체를 반환합니다.
+  return stationsWithDistance;
 }
 
 // ⭐ 2) GPS 기반 정보 조회 함수 수정 (stationName 추가)
@@ -203,10 +198,10 @@ async function getGpsBasedRegionInfo() {
     const stationId = findClosestKMAStationId(coords);
     
     // 👇 [추가] 새로 만든 함수를 호출합니다.
-    const { stationName } = findClosestAirQualityStation(coords);
+    const stationList = getStationsSortedByDistance(coords);
 
     // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
-    return { ...plabInfo, ...kmaInfo, stationId, stationName };
+    return { ...plabInfo, ...kmaInfo, stationId, stationList };
   } catch (error) {
     console.error("Failed to get GPS-based region information:", error.message);
     return null;
@@ -224,7 +219,7 @@ function getCurrentLocationInfo() {
     areaNo: '4117300000',
     grid: { nx: 60, ny: 121 },
     stationId: '119', // 안양시에서 가장 가까운 수원 관측소 ID
-    stationName: '부림동',
+    stationList: [ { stationName: '부림동', "lat": 37.394295443, "lon": 126.956832814 } ]
   };
 }
 

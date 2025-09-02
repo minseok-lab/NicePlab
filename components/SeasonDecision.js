@@ -1,8 +1,8 @@
 // components/SeasonDecision.js
 
-import { fetchPastTemperature } from '../api/pastTemperatureApi';
-import { getSeason } from '../utils/getSeason';
-import { getWeatherLocationInfo } from '../utils/locationUtils'; 
+import { fetchPastTemperature } from '../api';
+import { getSeason } from '../utils';
+import { getWeatherLocationInfo } from '../utils'; 
 
 /**
  * 기상청 과거 데이터를 조회하고 현재 계절을 판단하여 문자열로 반환합니다.

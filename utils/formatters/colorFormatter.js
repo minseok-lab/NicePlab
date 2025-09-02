@@ -1,7 +1,7 @@
 // /utils/colorFormatter.js
 
 // --- 1. 컬러 팔레트를 불러옵니다. ---
-import { PALETTE } from '../styles/colors';
+import { PALETTE } from '../../styles/colors';
 
 /**
  * 점수에 따라 동적인 배경색을 반환합니다.

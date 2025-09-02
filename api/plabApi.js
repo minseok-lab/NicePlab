@@ -5,7 +5,7 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (contsants)
-import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants/links';
+import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants';
 
 
 async function fetchAllPagesForDate(dateString, regionId, cities) {

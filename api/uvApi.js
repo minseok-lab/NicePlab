@@ -5,8 +5,8 @@
 import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (Constants, Utils)
-import { API_ENDPOINTS, KMA_UV_API_KEY } from '../constants/links';
-import { interpolateUvData } from '../utils/uvForcastDataParser';
+import { API_ENDPOINTS, KMA_UV_API_KEY } from '../constants';
+import { interpolateUvData } from '../utils';
 
 
 /**
