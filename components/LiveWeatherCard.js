@@ -3,26 +3,40 @@
 import { View, Text, Image, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 
 // --- 스타일 및 유틸리티 ---
-import { liveCardStyles as styles } from '../styles';
+import { useDynamicGradient } from '../hooks';
+import { getLiveCardStyles, PALETTE } from '../styles';
 import { formatWeather, getScoreColor, getUvColor, getDustColor } from '../utils';
 
 /**
  * props로 받은 실시간 날씨 정보를 표시하는 단순 뷰 컴포넌트입니다.
  */
 const LiveWeatherCard = ({ liveData }) => {
+  // ▼ 2. 훅을 호출하여 현재 테마와 상태를 가져옵니다.
+  const { state } = useDynamicGradient();
+  const theme = PALETTE.themes[state];
+
+  // ▼ 3. 테마를 인자로 전달하여 동적 스타일 객체를 생성합니다.
+  const styles = getLiveCardStyles(theme);
+
   // [변경] props로 받은 liveData가 없으면 로딩 상태를 표시합니다.
   if (!liveData) {
     return (
       <View style={[styles.cardContainer, { justifyContent: 'center', alignItems: 'center', minHeight: 150 }]}>
-        <ActivityIndicator size="small" color="#0040D3" />
-        <Text style={{ marginTop: 10, fontSize: 12 }}>실시간 정보 로딩 중...</Text>
+        <ActivityIndicator size="small" color={theme.statusGood} />
+        <Text style={{ marginTop: 10, fontSize: 12, color: theme.textSecondary }}>
+          실시간 정보 로딩 중...
+        </Text>
       </View>
     );
   }
   
   // 날짜/시간 포맷팅 (렌더링 시점에 계산)
   const now = new Date();
-  const formattedDateTime = `${now.getMonth() + 1}월 ${now.getDate()}일 ${now.toLocaleString('ko-KR', { weekday: 'long' })}`;
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  const formattedDateTime =
+    `${now.getMonth() + 1}월 ${now.getDate()}일 ${now.toLocaleString('ko-KR', { weekday: 'long' })} ${hours}:${minutes}`;
 
   const handleCardPress = () => {
     Linking.openURL("https://weather.naver.com/today/").catch(err => console.error("URL 열기 실패", err));
@@ -49,7 +63,7 @@ const LiveWeatherCard = ({ liveData }) => {
         {/* 컨텐츠 */}
         <View style={styles.content}>
           <View style={styles.weatherColumn}>
-            <Text style={styles.tempText}>{Math.round(temp)}°</Text>
+            <Text style={styles.tempText}>{temp.toFixed(1)}°</Text>
             <Image source={weather.icon} style={styles.icon} />
           </View>
           <View style={styles.detailsContainer}>

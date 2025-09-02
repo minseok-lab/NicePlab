@@ -2,23 +2,23 @@
 
 // --- 1. Import Section ---
 // 1) React 및 React Native 핵심 라이브러리
-import { View, Image, ScrollView, RefreshControl, StatusBar } from 'react-native';
+import { Image, ScrollView, RefreshControl, StatusBar } from 'react-native';
 
 // 2) 서드파티 라이브러리
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 // 3) 내부 모듈 (Hooks, Constants, Components)
-import { useWeather } from './hooks/useWeather.js';
-import { useDynamicGradient } from './hooks/useDynamicGradient.js'; // <<< 변경: 새로 만든 훅 추가
+import { useWeather, useDynamicGradient } from './hooks'; // <<< 변경: 새로 만든 훅 추가
 import { PLAB_FOOTBALL_URL } from './constants';
 import { WeatherInfo, LoadingIndicator, ErrorMessage, Toast } from './components';
 
 // 4) 스타일
-import { globalStyles as styles } from './styles';
+import { getGlobalStyles, PALETTE } from './styles';
 
 // 5) 에셋
-import Logo from './assets/nicePlabLogoBlack.png';
+import LogoBlack from './assets/nicePlabLogoBlack.png';
+import LogoWhite from './assets/nicePlabLogoWhite.png';
 
 
 // --- 2. App 컴포넌트 ---
@@ -26,7 +26,12 @@ function AppContent() {
   // 1) 시스템 UI(하단 바 등)에 의해 가려지는 영역의 크기를 가져옵니다.
   const insets = useSafeAreaInsets(); 
   const { weatherData, liveData, errorMsg, isLoading, plabMatches, lastUpdateTime, season, refetch, toastMessage, clearToast } = useWeather();
-  const { colors, statusBar } = useDynamicGradient(); // <<< 변경: 그라데이션 훅 호출
+  const { colors, statusBar, state } = useDynamicGradient();
+  // ▼ 2. 훅으로 가져온 state를 기반으로 테마와 스타일을 동적으로 생성합니다.
+  const theme = PALETTE.themes[state];
+  const styles = getGlobalStyles(theme);
+  // ▲
+  const currentLogo = state === 'night' ? LogoWhite : LogoBlack;
 
   // ✨ 개선안 1: 'refreshing' 상태와 'onRefresh' 함수를 제거합니다.
   // isLoading과 refetch를 RefreshControl에서 직접 사용해 상태 관리를 통합합니다.
@@ -38,11 +43,11 @@ function AppContent() {
     // 1) View에 동적으로 paddingBottom을 적용하여 하단 바 영역을 확보합니다.
     <LinearGradient 
       colors={colors} 
-      style={[styles.container, { paddingBottom: insets.bottom, flex: 1 }]}
+      style={[styles.container, { paddingBottom: insets.bottom }]}
     >
       <StatusBar barStyle={statusBar} />
       <Image 
-        source={Logo} 
+        source={currentLogo} 
         style={styles.logo}
         resizeMode="contain"
       />

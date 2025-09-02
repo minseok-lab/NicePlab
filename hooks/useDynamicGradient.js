@@ -1,36 +1,13 @@
 // hooks/useDynamicGradient.js
 
 import { useState, useEffect } from 'react';
-
 import SunCalc from 'suncalc';
-import { PALETTE } from '../styles';
-import { getUserLocationAndAddress } from '../utils'; 
+import { PALETTE } from '../styles'; // PALETTE은 그대로 사용합니다.
+import { getUserLocationAndAddress } from '../utils';
 
-// GRADIENT_SETTINGS는 변경사항 없습니다.
-const GRADIENT_SETTINGS = {
-  sunrise: {
-    colors: [PALETTE.gradient.sunrise.start, PALETTE.gradient.sunrise.end],
-    statusBar: 'dark-content',
-  },
-  day: {
-    colors: [PALETTE.gradient.day.start, PALETTE.gradient.day.end],
-    statusBar: 'dark-content',
-  },
-  sunset: {
-    colors: [PALETTE.gradient.sunset.start, PALETTE.gradient.sunset.end],
-    statusBar: 'light-content',
-  },
-  night: {
-    colors: [PALETTE.gradient.night.start, PALETTE.gradient.night.end],
-    statusBar: 'light-content',
-  },
-};
-
-// <<< 변경: 시간 판단 로직은 그대로 사용합니다.
-// SunCalc가 반환하는 객체에는 civil twilight 시작(dawn)과 종료(dusk) 시간이 포함되어 있습니다.
+// SunCalc를 이용한 시간대 계산 함수 (변경 없음)
 function getCurrentTimePeriod({ sunrise, sunset, dawn, dusk }) {
   const now = new Date();
-
   if (now >= dawn && now < sunrise) return 'sunrise';
   if (now >= sunset && now < dusk) return 'sunset';
   if (now >= sunrise && now < sunset) return 'day';
@@ -38,34 +15,43 @@ function getCurrentTimePeriod({ sunrise, sunset, dawn, dusk }) {
 }
 
 export function useDynamicGradient() {
-  const [gradientSettings, setGradientSettings] = useState(GRADIENT_SETTINGS.day);
+  const [timePeriod, setTimePeriod] = useState('day');
 
   useEffect(() => {
-    // <<< 변경: 전체 로직을 locationUtils를 사용하도록 수정합니다.
     const setGradient = async () => {
       try {
-        // 1. locationUtils를 통해 위치 정보와 주소를 가져옵니다.
         const locationData = await getUserLocationAndAddress();
-
-        // 위치 정보를 성공적으로 가져왔을 경우에만 실행합니다.
-        if (locationData && locationData.coords) {
+        if (locationData?.coords) {
           const { latitude, longitude } = locationData.coords;
-
-          // 2. SunCalc를 이용해 시간 정보를 계산합니다.
-          const sunTimes = SunCalc.getTimes(new Date(), latitude, longitude);
           
-          // 3. 시간대에 맞는 스타일을 적용합니다.
-          const period = getCurrentTimePeriod(sunTimes);
-          setGradientSettings(GRADIENT_SETTINGS[period]);
+          const updatePeriod = () => {
+            const sunTimes = SunCalc.getTimes(new Date(), latitude, longitude);
+            const period = getCurrentTimePeriod(sunTimes);
+            setTimePeriod(period);
+          };
+
+          updatePeriod();
+          const intervalId = setInterval(updatePeriod, 600000); // 10분마다
+          return () => clearInterval(intervalId);
         }
       } catch (error) {
-        // 위치 정보 가져오기 실패 시 콘솔에 에러를 출력하고 기본값(밤)을 유지합니다.
         console.error("Failed to set dynamic gradient:", error.message);
+        setTimePeriod('day'); // 에러 발생 시 '낮' 테마로 fallback
       }
     };
 
     setGradient();
-  }, []); // 앱이 처음 시작될 때 한 번만 실행
+  }, []);
 
-  return gradientSettings;
+  // ▼▼▼ 핵심 변경사항 ▼▼▼
+  // 더 이상 GRADIENT_SETTINGS를 사용하지 않고, PALETTE에서 직접 테마 정보를 가져옵니다.
+  const currentTheme = PALETTE.themes[timePeriod];
+  
+  return {
+    // 새로운 PALETTE 구조에 맞게 반환값 수정
+    colors: [currentTheme.gradient.start, currentTheme.gradient.end],
+    statusBar: currentTheme.statusBar,
+    state: timePeriod,
+  };
+  // ▲▲▲ 핵심 변경사항 ▲▲▲
 }

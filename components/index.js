@@ -5,7 +5,7 @@ import WeatherInfo from './WeatherInfo';
 import LoadingIndicator from './LoadingIndicator';
 import ErrorMessage from './ErrorMessage';
 import Toast from './Toast';
-import WeatherCard from './WeatherCard';
+import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 export * from './SeasonDecision';
@@ -17,7 +17,7 @@ export {
   LoadingIndicator,
   ErrorMessage,
   Toast,
-  WeatherCard,
+  RecommendTimeCard,
   MatchDetails,
   LiveWeatherCard,
 };

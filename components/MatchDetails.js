@@ -2,7 +2,8 @@
 
 import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { SvgUri } from 'react-native-svg';
-import { matchDetailsStyles as styles } from '../styles';
+// ▼ 1. 훅과 동적 스타일 유틸리티를 import 합니다.
+import { getMatchDetailsStyles } from '../styles';
 import { getTierFromLevel } from '../utils';
 import { getLevelBadgeUrl } from '../constants';
 
@@ -41,13 +42,15 @@ const getAverageLevelInfo = (match) => {
  * @param {boolean} isLoading - 상세 정보를 로딩 중인지 여부
  * @param {Array} matches - 표시할 매치 목록
  */
-const MatchDetails = ({ isLoading, matches }) => {
-  // 1. 로딩 중일 경우 ActivityIndicator를 표시합니다.
+const MatchDetails = ({ isLoading, matches, theme }) => {
+  // ▼ 2. 훅을 호출하여 현재 테마와 스타일을 가져옵니다.
+  const styles = getMatchDetailsStyles(theme);
+
   if (isLoading) {
-    return <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 10 }} />;
+    // ▼ 3. 하드코딩된 색상을 테마 색상으로 변경합니다.
+    return <ActivityIndicator size="small" color={theme.textPrimary} style={{ marginVertical: 10 }} />;
   }
 
-  // 2. 매치가 없을 경우 안내 문구를 표시합니다.
   if (matches.length === 0) {
     return (
       <View style={styles.matchListContainer}>
@@ -56,7 +59,6 @@ const MatchDetails = ({ isLoading, matches }) => {
     );
   }
   
-  // 3. 매치 목록을 렌더링합니다.
   return (
     <View style={styles.matchListContainer}>
       {matches.map(match => {
@@ -80,7 +82,7 @@ const MatchDetails = ({ isLoading, matches }) => {
                 <Text style={{ marginRight: 6 }}>📊</Text>
               )}
               <Text style={styles.matchDetailsText}>
-                {`평균 레벨: ${tierInfo.name}  [ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
+                {`평균 레벨: ${tierInfo.name}  [ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
               </Text>
             </View>
           </TouchableOpacity>

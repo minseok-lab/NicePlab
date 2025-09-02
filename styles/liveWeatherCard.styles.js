@@ -1,7 +1,7 @@
 // styles/liveWeatherCard.styles.js
 import { StyleSheet } from 'react-native';
 
-export const liveCardStyles = StyleSheet.create({
+export const getLiveCardStyles = (theme) => StyleSheet.create({
   // --- 카드 컨테이너 ---
   cardContainer: {
     backgroundColor: 'transparent', // 1. 배경을 투명하게 변경
@@ -28,12 +28,12 @@ export const liveCardStyles = StyleSheet.create({
   locationText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0c0c0c',
+    color: theme.textPrimary,
     marginBottom: 4,
   },
   dateText: {
     fontSize: 14,
-    color: '#555',
+    color: theme.textSecondary,
   },
   scoreBox: {
     paddingHorizontal: 15,
@@ -43,7 +43,7 @@ export const liveCardStyles = StyleSheet.create({
   scoreText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.white, // 점수 텍스트는 항상 흰색 유지
   },
 
   // --- 하단 영역 (날씨 정보) ---
@@ -59,13 +59,14 @@ export const liveCardStyles = StyleSheet.create({
   tempText: {
     fontSize: 40,
     fontWeight: '400',
-    color: '#0c0c0c',
+    color: theme.textPrimary,
     marginRight: 10,
   },
   icon: { // ⭐ 수정: weatherIcon -> icon
     width: 48,
     height: 48,
     resizeMode: 'contain',
+    marginLeft: 15,
   },
   detailsContainer: {
     flexDirection: 'row',
@@ -79,12 +80,12 @@ export const liveCardStyles = StyleSheet.create({
   },
   detailLabelsText: {
     fontSize: 14,
-    color: '#555',
+    color: theme.textSecondary,
     lineHeight: 22,
   },
   detailValuesText: {
     fontSize: 14,
-    color: '#0c0c0c',
+    color: theme.textPrimary,
     fontWeight: '600',
     lineHeight: 22,
   },

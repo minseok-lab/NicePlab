@@ -1,19 +1,14 @@
 // styles/weatherForcastCard.styles.js
 import { StyleSheet } from 'react-native';
 
-export const forcastCardStyles = StyleSheet.create({
+export const getForcastCardStyles = (theme) => StyleSheet.create({
   // --- 카드 컨테이너 ---
   cardContainer: {
-    backgroundColor: '#eeeeeeff',
+    backgroundColor: theme.cardBackground,
     padding: 16,
     marginVertical: 8,
     marginHorizontal: 20,
     borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
   },
 
   // --- 상단 영역 (시간 + 점수) ---
@@ -27,7 +22,7 @@ export const forcastCardStyles = StyleSheet.create({
   forcastTimeText: { // ⭐ 수정: dateText -> forcastTimeText (명확한 이름)
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0c0c0c',
+    color: theme.textPrimary,
   },
   scoreBox: {
     paddingHorizontal: 12,
@@ -37,7 +32,7 @@ export const forcastCardStyles = StyleSheet.create({
   scoreText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.white,
   },
 
   // --- 하단 영역 (날씨 정보) ---
@@ -55,7 +50,7 @@ export const forcastCardStyles = StyleSheet.create({
   tempText: {
     fontSize: 40,
     fontWeight: '500',
-    color: '#0c0c0c',
+    color: theme.textPrimary,
     marginRight: 30, // 온도와 아이콘 사이 간격
   },
   icon: { // ⭐ 수정: weatherIcon -> icon (LiveWeatherCard와 통일)
@@ -75,12 +70,12 @@ export const forcastCardStyles = StyleSheet.create({
   },
   detailLabelsText: {
     fontSize: 14,
-    color: '#555',
+    color: theme.textSecondary,
     lineHeight: 22,
   },
   detailValuesText: {
     fontSize: 14,
-    color: '#555',
+    color: theme.textSecondary,
     fontWeight: '600',
     lineHeight: 22,
   },

@@ -2,14 +2,15 @@
 
 import { StyleSheet } from 'react-native';
 
-export const matchDetailsStyles = StyleSheet.create({
+export const getMatchDetailsStyles = (theme) => StyleSheet.create({
   // --- 매치 리스트 전체 컨테이너 ---
   matchListContainer: { // ⭐ 이름 통일: listContainer -> matchListContainer
     marginTop: 16,
     marginHorizontal: 8,
+    backgroundColor: 'transparent',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#aaa',
+    borderTopColor: theme.textMuted,
   },
 
   // --- TouchableOpacity로 감싸는 개별 매치 아이템 ---
@@ -20,7 +21,7 @@ export const matchDetailsStyles = StyleSheet.create({
   // --- 매치 제목 ("⚽️ 실내 풋살") ---
   matchInfoText: { // ⭐ 이름 통일: infoText -> matchInfoText
     fontSize: 14,
-    color: '#555',
+    color: theme.textPrimary,
     fontWeight: 'bold',
     marginBottom: 4, // 제목과 상세 정보 사이 간격
   },
@@ -34,14 +35,14 @@ export const matchDetailsStyles = StyleSheet.create({
   // --- "평균 레벨: 아마추어..." 텍스트 ---
   matchDetailsText: { // ⭐ 이름 통일: detailsText -> matchDetailsText
     fontSize: 14,
-    color: '#555',
+    color: theme.textSecondary,
     flexShrink: 1, // ⭐ 줄바꿈 방지: 텍스트가 길어질 경우 줄어들도록 설정
   },
 
   // --- 매치 없음 텍스트 ---
   noMatchText: { // ⭐ 이름 변경: centeredText -> noMatchText
     paddingVertical: 10,
-    color: '#666',
+    color: theme.textSecondary,
     fontSize: 14,
   },
 });

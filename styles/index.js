@@ -1,7 +1,8 @@
 // styles/index.js
 
-export * from './colors';
-export * from './globalStyles';
-export * from './liveWeatherCard.styles';
-export * from './weatherForcastCard.styles';
-export * from './matchDetails.styles';
+// 각 파일에서 내보낼 대상을 명시적으로 지정해줍니다.
+export { PALETTE } from './colors';
+export { getGlobalStyles } from './globalStyles';
+export { getLiveCardStyles } from './liveWeatherCard.styles';
+export { getForcastCardStyles } from './weatherForcastCard.styles';
+export { getMatchDetailsStyles } from './matchDetails.styles'; // 이 파일도 동일하게 적용합니다.

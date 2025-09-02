@@ -1,8 +1,7 @@
 // styles/globalStyles.js
 import { StyleSheet } from 'react-native';
-import { PALETTE } from './colors'; // 색상 팔레트 import
 
-export const globalStyles = StyleSheet.create({
+export const getGlobalStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 48,
@@ -10,7 +9,8 @@ export const globalStyles = StyleSheet.create({
   logo: {
     width: 168.5,
     height: 27.5,
-    alignSelf: 'left',
+    alignSelf: 'flex-start',
+    marginTop: 10,
     marginBottom: 10,
     marginHorizontal: 30,
   },
@@ -19,7 +19,7 @@ export const globalStyles = StyleSheet.create({
     fontWeight: '600',
     marginVertical: 12,
     textAlign: 'left',
-    color: PALETTE.textPrimary,
+    color: theme.textPrimary,
     marginHorizontal: 30,
   },
   loadingContainer: {
@@ -40,10 +40,10 @@ export const globalStyles = StyleSheet.create({
   },
   footerText: {
     fontSize: 10,
-    color: PALETTE.textMuted,
+    color: theme.white,
   },
   error: {
-    color: PALETTE.error,
+    color: theme.error,
     textAlign: 'center',
     marginTop: 48,
   },
@@ -51,6 +51,6 @@ export const globalStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     marginTop: 32,
-    color: PALETTE.textSecondary,
+    color: theme.textSecondary,
   },
 });

@@ -5,13 +5,21 @@ import { useState, useMemo } from 'react';
 import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react-native';
 import { fetchPlabMatchDetails } from '../api';
 import { getBestExerciseTimes } from '../utils';
-import { globalStyles, forcastCardStyles } from '../styles';
-import WeatherCard from './WeatherCard';
+import { useDynamicGradient } from '../hooks';
+import { getGlobalStyles, getForcastCardStyles, PALETTE } from '../styles';
+import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 
 // --- Main Component ---
 const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
+
+  // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
+  const { state } = useDynamicGradient();
+  const theme = PALETTE.themes[state];
+  const globalStyles = getGlobalStyles(theme);
+  const forcastCardStyles = getForcastCardStyles(theme);
+  // ▲
 
   // --- State (변경 없음) ---
   const [expandedTimestamp, setExpandedTimestamp] = useState(null);
@@ -57,8 +65,8 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
         });
       }
       
-      // 7. 최종 목록이 7개가 채워지면 종료 (변경 없음)
-      if (filteredWithMatches.length === 7) {
+      // 7. 최종 목록이 10개가 채워지면 종료 (변경 없음)
+      if (filteredWithMatches.length === 10) {
         break;
       }
     }
@@ -101,7 +109,7 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
   return (
     <ScrollView>
       <LiveWeatherCard liveData={liveData} />
-      <Text style={globalStyles.subHeader}>추천 시간대 TOP 7</Text>
+      <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
       
       {finalRecommendedSlots.length > 0 ? (
         finalRecommendedSlots.map((weatherItem) => {
@@ -114,20 +122,23 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
           const matchesForThisSlot = detailedMatches[timestamp] || matches;
 
           return (
+            // 1. TouchableOpacity는 터치 이벤트만 담당하고 스타일은 가지지 않습니다.
             <TouchableOpacity 
-              key={timestamp} 
-              style={forcastCardStyles.cardContainer}
-              // 💡 [로직 개선] 핸들러에 클릭된 카드의 기본 매치 정보를 함께 넘겨줍니다.
+              key={timestamp}
               onPress={() => handleToggleCard(timestamp, matches)}
               activeOpacity={0.8}
             >
-              <WeatherCard weatherItem={weatherItem} />
-              {isExpanded && (
-                <MatchDetails 
-                  isLoading={isLoading}
-                  matches={matchesForThisSlot}
-                />
-              )}
+              {/* 2. 시각적인 스타일(배경, 그림자 등)은 내부의 View가 담당합니다. */}
+              <View style={forcastCardStyles.cardContainer}>
+                <RecommendTimeCard weatherItem={weatherItem} />
+                {isExpanded && (
+                  <MatchDetails 
+                    isLoading={isLoading}
+                    matches={matchesForThisSlot}
+                    theme={theme}
+                  />
+                )}
+              </View>
             </TouchableOpacity>
           );
         })

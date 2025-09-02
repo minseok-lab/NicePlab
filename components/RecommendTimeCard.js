@@ -1,8 +1,9 @@
-// components/WeatherCard.js
+// components/RecommendTimeCard.js
 
 import { View, Text, Image } from 'react-native';
 // 👇 WeatherForcastCard 전용 스타일을 import 합니다.
-import { forcastCardStyles as styles } from '../styles';
+import { useDynamicGradient } from '../hooks';
+import { getForcastCardStyles, PALETTE } from '../styles';
 import { formatWeather, getScoreColor, getUvColor, getDustColor } from '../utils';
 
 /**
@@ -10,8 +11,14 @@ import { formatWeather, getScoreColor, getUvColor, getDustColor } from '../utils
  * (TouchableOpacity로 감싸져서 사용됩니다)
  * @param {object} weatherItem - 특정 시간대의 모든 날씨 정보가 담긴 객체
  */
-const WeatherCard = ({ weatherItem }) => {
+const RecommendTimeCard = ({ weatherItem }) => {
   
+  // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 동적 스타일을 생성합니다.
+  const { state } = useDynamicGradient();
+  const theme = PALETTE.themes[state];
+  const styles = getForcastCardStyles(theme);
+  // ▲
+
   // 1. 데이터 구조 분해 할당
   const { dt, totalScore, temp, sky, pty, humidity, uvIndex, pm10Grade, pm25Grade } = weatherItem;
   
@@ -61,4 +68,4 @@ const WeatherCard = ({ weatherItem }) => {
   );
 };
 
-export default WeatherCard;
+export default RecommendTimeCard;
