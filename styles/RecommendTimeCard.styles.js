@@ -1,7 +1,7 @@
-// styles/weatherForcastCard.styles.js
+// styles/RecommendTimeCard.styles.js
 import { StyleSheet } from 'react-native';
 
-export const getForcastCardStyles = (theme) => StyleSheet.create({
+export const getRecommendTimeCardStyles = (theme) => StyleSheet.create({
   // --- 카드 컨테이너 ---
   cardContainer: {
     backgroundColor: theme.cardBackground,

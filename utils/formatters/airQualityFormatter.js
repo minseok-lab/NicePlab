@@ -1,4 +1,4 @@
-// utils/airQualityFormatter.js
+// utils/formatter/airQualityFormatter.js
 
 /**
  * 기능: 미세먼지/초미세먼지 수치를 바탕으로 등급(좋음, 보통 등)을 반환합니다.

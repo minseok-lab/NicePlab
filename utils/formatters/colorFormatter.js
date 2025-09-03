@@ -1,4 +1,4 @@
-// /utils/colorFormatter.js
+// /utils/formatter/colorFormatter.js
 
 // --- 1. 컬러 팔레트를 불러옵니다. ---
 // PALETTE import 경로는 프로젝트 구조에 맞게 확인해주세요.
@@ -14,7 +14,7 @@ export const getScoreColor = (score) => {
   if (score >= 70) return PALETTE.common.statusWarning;
   if (score >= 60) return PALETTE.common.statusBad;
   if (score >= 50) return PALETTE.common.statusVeryBad;
-  return PALETTE.common.textMuted; 
+  return PALETTE.common.statusExtra; 
   // ▲▲▲ .common 추가 ▲▲▲
 };
 

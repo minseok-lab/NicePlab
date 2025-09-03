@@ -6,7 +6,7 @@ import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react
 import { fetchPlabMatchDetails } from '../api';
 import { getBestExerciseTimes } from '../utils';
 import { useDynamicGradient } from '../hooks';
-import { getGlobalStyles, getForcastCardStyles, PALETTE } from '../styles';
+import { getGlobalStyles, getRecommendTimeCardStyles, PALETTE } from '../styles';
 import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
@@ -18,7 +18,7 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
   const { state } = useDynamicGradient();
   const theme = PALETTE.themes[state];
   const globalStyles = getGlobalStyles(theme);
-  const forcastCardStyles = getForcastCardStyles(theme);
+  const forcastCardStyles = getRecommendTimeCardStyles(theme);
   // ▲
 
   // --- State (변경 없음) ---

@@ -1,37 +1,54 @@
-// utils/uvForcastDataParser.js
+// utils/formatter/uvForcastDataParser.js
 
 /**
- * 기능: 3시간 단위의 UV 데이터를 1시간 단위로 선형 보간합니다.
- * @param {Object} uvRawData - 기상청 API 원본 응답의 item[0] 객체
- * @returns {Object} - 시간(h)을 키로, 보간된 UV 지수를 값으로 갖는 객체
+ * 기능: 기상청 UV 지수 원본 데이터를 받아 전체 예보 기간에 대해 시간대별로 선형 보간합니다.
+ * @param {object} uvRawData - 기상청 API 원본 데이터 객체 ('h0', 'h3' 등 포함)
+ * @param {number} baseHour - API 요청의 기준 시간 (예: 6 또는 18)
+ * @returns {object} - 절대 시간을 키로, 보간된 UV 지수를 값으로 갖는 전체 예보 객체
  */
-export const interpolateUvData = (uvRawData) => {
+export const interpolateUvData = (uvRawData, baseHour) => {
+  const points = {};
+  
+  // 1. API 데이터를 {절대시간: 값} 형태로 변환합니다. (예: {'15': 5})
+  // 기상청이 제공하는 h0 ~ h75 까지의 모든 데이터를 처리합니다.
+  for (let i = 0; i <= 75; i += 3) {
+    const key = `h${i}`;
+    if (uvRawData[key] !== undefined && uvRawData[key] !== '') {
+      const absoluteHour = baseHour + i;
+      points[absoluteHour] = parseInt(uvRawData[key], 10);
+    }
+  }
+
   const hourlyUv = {};
-  // h0부터 h72까지 3시간 간격으로 반복합니다.
-  for (let i = 0; i <= 72; i += 3) {
-    const startKey = `h${i}`;
-    const endKey = `h${i + 3}`;
+  const sortedHours = Object.keys(points).map(Number).sort((a, b) => a - b);
+  
+  // 2. 변환된 데이터를 기반으로 전체 기간에 대해 선형 보간을 수행합니다.
+  for (let i = 0; i < sortedHours.length - 1; i++) {
+    const startHour = sortedHours[i];
+    const endHour = sortedHours[i + 1];
+    const startValue = points[startHour];
+    const endValue = points[endHour];
 
-    // API 응답에서 시작 시간과 종료 시간의 UV 지수 값을 가져옵니다.
-    const startVal = parseFloat(uvRawData[startKey]);
-    const endVal = parseFloat(uvRawData[endKey]);
+    // 시작 지점의 값을 먼저 넣습니다.
+    hourlyUv[startHour] = startValue;
 
-    // 시작값이 유효한 숫자인지 확인합니다.
-    if (!isNaN(startVal)) {
-      hourlyUv[i] = startVal;
-
-      // 종료값도 유효하다면, 그 사이 값을 선형 보간으로 계산합니다.
-      if (!isNaN(endVal)) {
-        const difference = endVal - startVal;
-        const step = difference / 3.0;
-        hourlyUv[i + 1] = parseFloat((startVal + step).toFixed(2));
-        hourlyUv[i + 2] = parseFloat((startVal + step * 2).toFixed(2));
-      } else {
-        // 종료값이 유효하지 않다면, 시작값으로 이후 2시간을 채웁니다.
-        hourlyUv[i + 1] = startVal;
-        hourlyUv[i + 2] = startVal;
+    // 두 지점 사이의 값을 보간하여 채웁니다.
+    const hourDiff = endHour - startHour;
+    if (hourDiff > 1) {
+      for (let h = startHour + 1; h < endHour; h++) {
+        const progress = (h - startHour) / hourDiff;
+        const interpolatedValue = startValue + (endValue - startValue) * progress;
+        // ✨ [수정] 오늘 하루만 필터링하던 조건을 제거하여 전체 데이터를 포함시킵니다.
+        hourlyUv[h] = parseFloat(interpolatedValue.toFixed(2));
       }
     }
   }
+
+  // 3. 마지막 예보 지점을 추가합니다.
+  const lastHour = sortedHours[sortedHours.length - 1];
+  if (lastHour !== undefined) {
+    hourlyUv[lastHour] = points[lastHour];
+  }
+
   return hourlyUv;
 };

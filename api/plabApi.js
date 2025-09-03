@@ -62,7 +62,10 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
         
         return {
           ...match,
-          formatted_time: `${hours}:${minutes}`
+          formatted_time: `${hours}:${minutes}`,
+          is_earlybird: match.is_earlybird, // 얼리버드 여부
+          is_super_sub: match.is_super_sub, // 슈퍼서브 여부
+          type: match.type 
         };
       });
 

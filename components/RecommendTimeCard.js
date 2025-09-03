@@ -3,7 +3,7 @@
 import { View, Text, Image } from 'react-native';
 // 👇 WeatherForcastCard 전용 스타일을 import 합니다.
 import { useDynamicGradient } from '../hooks';
-import { getForcastCardStyles, PALETTE } from '../styles';
+import { getRecommendTimeCardStyles, PALETTE } from '../styles';
 import { formatWeather, getScoreColor, getUvColor, getDustColor } from '../utils';
 
 /**
@@ -16,7 +16,7 @@ const RecommendTimeCard = ({ weatherItem }) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 동적 스타일을 생성합니다.
   const { state } = useDynamicGradient();
   const theme = PALETTE.themes[state];
-  const styles = getForcastCardStyles(theme);
+  const styles = getRecommendTimeCardStyles(theme);
   // ▲
 
   // 1. 데이터 구조 분해 할당

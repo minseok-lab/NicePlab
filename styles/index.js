@@ -4,5 +4,5 @@
 export { PALETTE } from './colors';
 export { getGlobalStyles } from './globalStyles';
 export { getLiveCardStyles } from './liveWeatherCard.styles';
-export { getForcastCardStyles } from './weatherForcastCard.styles';
+export { getRecommendTimeCardStyles } from './RecommendTimeCard.styles';
 export { getMatchDetailsStyles } from './matchDetails.styles'; // 이 파일도 동일하게 적용합니다.

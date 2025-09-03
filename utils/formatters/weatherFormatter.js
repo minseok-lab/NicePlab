@@ -1,4 +1,4 @@
-// utils/weatherFormatter.js
+// utils/formatter/weatherFormatter.js
 
 // 1. 단 한 줄로 모든 아이콘을 import 합니다.
 // - 가독성: 파일의 의존성이 아이콘 모듈 하나라는 것을 명확히 보여줍니다.

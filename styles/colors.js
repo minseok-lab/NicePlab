@@ -12,6 +12,7 @@ const common = {
   statusWarning: '#FBCE33',
   statusBad: '#E16F24',
   statusVeryBad: '#C60F14',
+  statusExtra: '#0c0c0c',
 
   // 기타
   error: 'red',
@@ -23,10 +24,10 @@ const themes = {
   // --- 낮 테마 ---
   day: {
     background: '#fdfdfd',
-    textPrimary: '#333333',
-    textSecondary: '#666666',
-    textMuted: '#888888',
-    cardBackground: '#468dd955',
+    textPrimary: '#222222',
+    textSecondary: '#444444',
+    textMuted: '#666666',
+    cardBackground: 'rgba(255, 255, 255, 0.25)',
     gradient: { start: '#468DD9', end: '#61CBF4' },
     statusBar: 'dark-content',
   },
@@ -45,11 +46,11 @@ const themes = {
   // --- 일출 & 일몰 테마 ---
   // 밤 테마와 UI 요소 색상을 공유하지만, 그라데이션만 다르게 설정
   evening: {
-    background: '#0c0c0c',
-    textPrimary: '#ffffff',
-    textSecondary: '#bbbbbb',
-    textMuted: '#999999',
-    cardBackground: '#bd596c54',
+    background: '#fdfdfd',
+    textPrimary: '#222222',
+    textSecondary: '#444444',
+    textMuted: '#666666',
+    cardBackground: '#ffc0c055',
     statusBar: 'light-content',
   }
 };

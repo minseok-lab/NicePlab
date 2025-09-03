@@ -14,6 +14,7 @@ import {
   fetchPastTemperature,
   fetchKmaLiveWeather,      // 실시간 날씨
   fetchCurrentAirQuality, // 실시간 대기질
+  fetchCurrentUvIndex,    // 실시간 자외선 지수 API
 } from '../api';
 
 // Utils
@@ -151,14 +152,16 @@ export const useWeather = (locationName = "내 위치") => {
       liveWeatherRes,
       uvForcastRes,
       airqualityForcastRes,
-      currentAirRes, // 👈 결과 변수 추가
+      currentAirRes,
+      currentUvRes,
     ] = await Promise.allSettled([
       fetchPastTemperature(locationInfo.stationId),
       fetchKmaWeatherForcast(locationInfo.grid),
       fetchKmaLiveWeather(locationInfo.grid),
       fetchUvIndexForcast(locationInfo.areaNo),
       fetchAirQualityForcast(locationInfo.airQualityRegion),
-      fetchLiveAirQualityWithFallback(locationInfo.stationList), // 👈 여기에 포함
+      fetchLiveAirQualityWithFallback(locationInfo.stationList),
+      fetchCurrentUvIndex(locationInfo.areaNo),
     ]);
 
       // 5. API 결과 처리
@@ -179,12 +182,12 @@ export const useWeather = (locationName = "내 위치") => {
       setWeatherData(finalWeatherData);
       
       const liveWeatherResult = liveWeatherRes.status === 'fulfilled' ? liveWeatherRes.value : cached.live;
-      const currentAirResult = currentAirRes.status === 'fulfilled' ? currentAirRes.value : null; // 👈 결과 처리
+      const currentAirResult = currentAirRes.status === 'fulfilled' ? currentAirRes.value : null;
+      const currentUvResult = currentUvRes.status === 'fulfilled' ? currentUvRes.value : null;
       
       let finalLiveData = null; // 👈 [개선 2] 최종 liveData를 저장할 변수 선언
       if (liveWeatherResult) {
-        const currentHour = now.getHours();
-        const currentUvIndex = uvResult?.hourlyUv?.[currentHour] ?? '정보없음';
+        const currentUvIndex = currentUvResult ?? '정보없음';
         const combined = {
           locationName: locationInfo.currentCity,
           ...liveWeatherResult,

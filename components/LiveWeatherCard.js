@@ -75,7 +75,7 @@ const LiveWeatherCard = ({ liveData }) => {
             </View>
             <View style={styles.detailValues}>
               <Text style={styles.detailValuesText}>{humidity}%</Text>
-              <Text style={[styles.detailValuesText, { color: getUvColor(validUvIndex) }]}>{uvIndex}</Text>
+              <Text style={[styles.detailValuesText, { color: getUvColor(validUvIndex) }]}>{validUvIndex}</Text>
               <Text style={[styles.detailValuesText, { color: getDustColor(pm10Grade) }]}>{pm10Grade}</Text>
               <Text style={[styles.detailValuesText, { color: getDustColor(pm25Grade) }]}>{pm25Grade}</Text>
             </View>
