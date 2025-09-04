@@ -16,6 +16,7 @@ function getCurrentTimePeriod({ sunrise, sunset, dawn, dusk }) {
 
 export function useDynamicGradient() {
   const [timePeriod, setTimePeriod] = useState('day');
+  const [location, setLocation] = useState(null); 
 
   useEffect(() => {
     const setGradient = async () => {
@@ -23,7 +24,7 @@ export function useDynamicGradient() {
         const locationData = await getUserLocationAndAddress();
         if (locationData?.coords) {
           const { latitude, longitude } = locationData.coords;
-          
+          setLocation({ latitude, longitude });
           const updatePeriod = () => {
             const sunTimes = SunCalc.getTimes(new Date(), latitude, longitude);
             const period = getCurrentTimePeriod(sunTimes);
@@ -52,6 +53,7 @@ export function useDynamicGradient() {
     colors: [currentTheme.gradient.start, currentTheme.gradient.end],
     statusBar: currentTheme.statusBar,
     state: timePeriod,
+    location,
   };
   // ▲▲▲ 핵심 변경사항 ▲▲▲
 }

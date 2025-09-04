@@ -10,12 +10,13 @@ import { getGlobalStyles, getRecommendTimeCardStyles, PALETTE } from '../styles'
 import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
+import LoadingIndicator from './LoadingIndicator';
 
 // --- Main Component ---
-const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUpdateTime, season }) => {
+const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUpdateTime, season, }) => {
 
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
-  const { state } = useDynamicGradient();
+  const { state, location } = useDynamicGradient();
   const theme = PALETTE.themes[state];
   const globalStyles = getGlobalStyles(theme);
   const forcastCardStyles = getRecommendTimeCardStyles(theme);
@@ -105,10 +106,15 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
     }
   };
 
+  // location을 기다리는 동안 로딩 화면을 보여줍니다.
+  if (!location) {
+    return <LoadingIndicator />;
+  }
+
   // --- Render ---
   return (
     <ScrollView>
-      <LiveWeatherCard liveData={liveData} />
+      <LiveWeatherCard liveData={liveData} location={location} />
       <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
       
       {finalRecommendedSlots.length > 0 ? (
@@ -130,7 +136,7 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
             >
               {/* 2. 시각적인 스타일(배경, 그림자 등)은 내부의 View가 담당합니다. */}
               <View style={forcastCardStyles.cardContainer}>
-                <RecommendTimeCard weatherItem={weatherItem} />
+                <RecommendTimeCard weatherItem={weatherItem} location={location} />
                 {isExpanded && (
                   <MatchDetails 
                     isLoading={isLoading}

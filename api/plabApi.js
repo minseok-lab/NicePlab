@@ -1,4 +1,4 @@
-// api/plabService.js
+// api/plabApi.js
 
 // --- 1. Import Section ---
 // 1) api 호출 경로를 불러옵니다.
@@ -8,10 +8,11 @@ import { apiClient } from './apiClient';
 import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants';
 
 
-async function fetchAllPagesForDate(dateString, regionId, cities) {
+async function fetchAllPagesForDate(dateString, regionId, ) {
   // ... (이 함수는 변경 없음) ...
   let requestUrl = `${PLAB_API_URL}?ordering=schedule&sch=${dateString}&region=${regionId}&page_size=100`;
   let matchesForDate = [];
+  let pageCount = 1; // ✨ 페이지 카운터 추가
 
   while (requestUrl) {
     // ✨ apiClient가 fetch와 기본 에러 처리를 담당합니다.
@@ -19,12 +20,21 @@ async function fetchAllPagesForDate(dateString, regionId, cities) {
 
     // 데이터 로드에 실패하면 루프를 중단합니다.
     if (!data) {
-      console.warn(`Warning: ${dateString} 날짜의 플랩 매치 페이지를 가져오지 못했습니다.`);
+      console.warn(`[Plab] Warning: ${dateString} 날짜의 페이지 ${pageCount}를 가져오지 못했습니다.`);
       break; 
     }
     
     matchesForDate = matchesForDate.concat(data.results);
+    const nextUrl = data.next;
+    
+    // 다음 페이지 URL이 현재 URL과 동일하면 루프를 강제로 중단합니다.
+    if (nextUrl === requestUrl) {
+      console.warn(`[무한 루프 방지] 다음 페이지 URL이 현재 URL과 동일하여 중단합니다: ${requestUrl}`);
+      break;
+    }
+
     requestUrl = data.next; // 다음 페이지 URL로 업데이트
+    pageCount++;
   }
   return matchesForDate;
 }
@@ -45,6 +55,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
   try {
     const promises = uniqueDates.map(dateString => fetchAllPagesForDate(dateString, regionId, cities));
     const resultsByDate = await Promise.all(promises);
+    console.log('[Plab] 모든 날짜의 페이지 로딩 완료. 데이터 필터링을 시작합니다.');
     const allMatches = resultsByDate.flat();
 
     const formattedAndFiltered = allMatches
@@ -68,7 +79,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
           type: match.type 
         };
       });
-
+      console.log(`[Plab] 최종 매치 데이터 처리 완료. ${formattedAndFiltered.length}개의 매치를 반환합니다.`);
     return formattedAndFiltered;
 
   } catch (error) {

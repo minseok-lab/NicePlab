@@ -6,11 +6,12 @@ import { View, Text, Image, ActivityIndicator, TouchableOpacity, Linking } from 
 import { useDynamicGradient } from '../hooks';
 import { getLiveCardStyles, PALETTE } from '../styles';
 import { formatWeather, getScoreColor, getUvColor, getDustColor } from '../utils';
+import { NAVER_WEATHER_URL } from '../constants';
 
 /**
  * props로 받은 실시간 날씨 정보를 표시하는 단순 뷰 컴포넌트입니다.
  */
-const LiveWeatherCard = ({ liveData }) => {
+const LiveWeatherCard = ({ liveData, location }) => {
   // ▼ 2. 훅을 호출하여 현재 테마와 상태를 가져옵니다.
   const { state } = useDynamicGradient();
   const theme = PALETTE.themes[state];
@@ -39,7 +40,15 @@ const LiveWeatherCard = ({ liveData }) => {
     `${now.getMonth() + 1}월 ${now.getDate()}일 ${now.toLocaleString('ko-KR', { weekday: 'long' })} ${hours}:${minutes}`;
 
   const handleCardPress = () => {
-    Linking.openURL("https://weather.naver.com/today/").catch(err => console.error("URL 열기 실패", err));
+    // 1. location 객체와 위도/경도 값이 있는지 확인합니다.
+    if (location && location.latitude && location.longitude) {
+      // 2. 위도/경도를 포함한 동적 URL을 생성합니다.
+      const dynamicUrl = `https://weather.naver.com/today/?lat=${location.latitude}&lon=${location.longitude}`;
+      Linking.openURL(dynamicUrl).catch(err => console.error("URL 열기 실패", err));
+    } else {
+      // 3. location 정보가 없을 경우, 기존의 기본 URL로 이동합니다. (폴백)
+      Linking.openURL(NAVER_WEATHER_URL).catch(err => console.error("URL 열기 실패", err));
+    }
   };
   
   const weather = formatWeather(liveData.pty > 0 ? 4 : 1, liveData.pty);

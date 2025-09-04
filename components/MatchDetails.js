@@ -2,7 +2,8 @@ import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-
 import { SvgUri } from 'react-native-svg';
 import { getMatchDetailsStyles } from '../styles';
 import { getTierFromLevel } from '../utils';
-import { getLevelBadgeUrl, PLAB_EARLY_Bird, PLAB_SUPER_SUB, PLAB_TSHIRT_MATCH } from '../constants';
+import { getLevelBadgeUrl, PLAB_EARLY_Bird, PLAB_SUPER_SUB } from '../constants';
+import SvgIcTshirt from './IcTshirt';
 
 // --- Helper Functions ---
 // ✨ FIX: 함수가 문자열 대신 순수한 숫자 또는 null을 반환하도록 수정
@@ -50,9 +51,6 @@ const MatchDetails = ({ isLoading, matches, theme }) => {
             {matches.map(match => {
                 // 1. averageLevel은 이제 숫자 또는 null 입니다.
                 const averageLevel = getAverageLevelInfo(match);
-                
-                // 2. match.grade가 있으면 우선 사용하고, 없으면 averageLevel을 사용합니다.
-                const displayLevel = match.grade > 0 ? match.grade : averageLevel;
 
                 // ✨ FIX: tierInfo가 없는 경우를 대비해 안전한 기본값을 설정합니다.
                 const tierInfo = getTierFromLevel(averageLevel) || { name: '정보 없음', en_name: '' }; 
@@ -70,13 +68,27 @@ const MatchDetails = ({ isLoading, matches, theme }) => {
                             </Text>
 
                             {typeof match.is_earlybird === 'number' && (
-                                <SvgUri width="18" height="18" uri={PLAB_EARLY_Bird} style={styles.iconStyle} />
+                                <SvgUri
+                                    width = "18"
+                                    height = "18"
+                                    uri = {PLAB_EARLY_Bird}
+                                    style = {[styles.baseIconStyle, styles.earlybirdIconStyle]}
+                                />
                             )}
                             {Boolean(match.is_super_sub) && (
-                                <SvgUri width="18" height="18" uri={PLAB_SUPER_SUB} style={styles.iconStyle} />
+                                <SvgUri
+                                    width = "18"
+                                    height = "18"
+                                    uri = {PLAB_SUPER_SUB}
+                                    style = {[styles.baseIconStyle, styles.earlybirdIconStyle]} />
                             )}
                             {match.type === 'tshirt' && (
-                                <SvgUri width="18" height="18" uri={PLAB_TSHIRT_MATCH} style={styles.iconStyle} />
+                                <SvgIcTshirt
+                                    width="30"
+                                    height="30"
+                                    color={theme.iconColor} // 예: theme 객체에 정의된 텍스트 색상
+                                    style={[styles.baseIconStyle, styles.tshirtIconStyle]}
+                                />
                             )}
                         </View>
                             

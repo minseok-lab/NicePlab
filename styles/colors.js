@@ -27,6 +27,7 @@ const themes = {
     textPrimary: '#222222',
     textSecondary: '#444444',
     textMuted: '#666666',
+    iconColor: '#393D46',
     cardBackground: 'rgba(255, 255, 255, 0.25)',
     gradient: { start: '#468DD9', end: '#61CBF4' },
     statusBar: 'dark-content',
@@ -36,8 +37,9 @@ const themes = {
   night: {
     background: '#0c0c0c',
     textPrimary: '#ffffff',
-    textSecondary: '#bbbbbb',
-    textMuted: '#999999',
+    textSecondary: '#dddddd',
+    textMuted: '#bbbbbb',
+    iconColor: '#C6C2B9',
     cardBackground: '#1e1e1e55',
     gradient: { start: '#0F2027', end: '#5F6B9E' },
     statusBar: 'light-content',
@@ -50,7 +52,8 @@ const themes = {
     textPrimary: '#222222',
     textSecondary: '#444444',
     textMuted: '#666666',
-    cardBackground: '#ffc0c055',
+    iconColor: '#393D46',
+    cardBackground: 'rgba(255, 255, 255, 0.25)',
     statusBar: 'light-content',
   }
 };
