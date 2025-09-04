@@ -1,3 +1,5 @@
+// .eslintrc.js
 module.exports = {
-  extends: 'expo',
+  root: true,
+  extends: '@react-native-community',
 };
