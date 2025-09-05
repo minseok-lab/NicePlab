@@ -1,9 +1,11 @@
 // components/Toast.js
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Text, StyleSheet, Animated } from 'react-native';
 
 const Toast = ({ message, onDismiss }) => {
-  const opacity = new Animated.Value(0);
+  // 2. useRef를 사용하여 opacity 값을 렌더링 간에 안정적으로 유지합니다.
+  // 이렇게 하면 컴포넌트가 리렌더링 되어도 동일한 Animated.Value 객체를 계속 참조하게 됩니다.
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // 메시지가 있을 때만 애니메이션 실행
@@ -24,7 +26,7 @@ const Toast = ({ message, onDismiss }) => {
         onDismiss(); // 애니메이션이 끝나면 메시지 닫기 함수 호출
       });
     }
-  }, [message]);
+  }, [message, onDismiss, opacity]);
 
   if (!message) {
     return null;

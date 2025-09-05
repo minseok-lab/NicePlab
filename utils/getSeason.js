@@ -26,29 +26,31 @@ function findCurrentSeason(movingAverages) {
   // DEBUG: 가장 최신 이동 평균 온도를 확인합니다.
   console.log(`[계절 탐색] 지난 평균 기온: ${latestMA}°C`);
 
-  if (latestMA >= 20) return "summer";
-  if (latestMA < 5) return "winter";
+  if (latestMA >= 20) return 'summer';
+  if (latestMA < 5) return 'winter';
 
   if (latestMA >= 5 && latestMA < 20) {
     for (let i = movingAverages.length - 2; i >= 0; i--) {
       const pastMA = movingAverages[i].movingAverage;
-      if (pastMA >= 20) return "autumn";
-      if (pastMA < 5) return "spring";
+      if (pastMA >= 20) return 'autumn';
+      if (pastMA < 5) return 'spring';
     }
-    return "autumn";
+    return 'autumn';
   }
   return null;
 }
 
-export const getSeason = (pastData) => {
+export const getSeason = pastData => {
   // pastData 객체에서 .list 속성을 추출해야 합니다.
   const dataList = pastData?.list;
 
   if (!dataList || dataList.length < 10) {
-    console.warn("계절을 판단하기에 데이터가 충분하지 않습니다. (최소 10일 필요)");
+    console.warn(
+      '계절을 판단하기에 데이터가 충분하지 않습니다. (최소 10일 필요)',
+    );
     return null;
   }
-  
+
   const movingAverages = calculateMovingAverages(dataList);
   const season = findCurrentSeason(movingAverages);
 

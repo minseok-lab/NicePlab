@@ -8,7 +8,7 @@
  */
 export const interpolateUvData = (uvRawData, baseHour) => {
   const points = {};
-  
+
   // 1. API 데이터를 {절대시간: 값} 형태로 변환합니다. (예: {'15': 5})
   // 기상청이 제공하는 h0 ~ h75 까지의 모든 데이터를 처리합니다.
   for (let i = 0; i <= 75; i += 3) {
@@ -20,8 +20,10 @@ export const interpolateUvData = (uvRawData, baseHour) => {
   }
 
   const hourlyUv = {};
-  const sortedHours = Object.keys(points).map(Number).sort((a, b) => a - b);
-  
+  const sortedHours = Object.keys(points)
+    .map(Number)
+    .sort((a, b) => a - b);
+
   // 2. 변환된 데이터를 기반으로 전체 기간에 대해 선형 보간을 수행합니다.
   for (let i = 0; i < sortedHours.length - 1; i++) {
     const startHour = sortedHours[i];
@@ -37,7 +39,8 @@ export const interpolateUvData = (uvRawData, baseHour) => {
     if (hourDiff > 1) {
       for (let h = startHour + 1; h < endHour; h++) {
         const progress = (h - startHour) / hourDiff;
-        const interpolatedValue = startValue + (endValue - startValue) * progress;
+        const interpolatedValue =
+          startValue + (endValue - startValue) * progress;
         // ✨ [수정] 오늘 하루만 필터링하던 조건을 제거하여 전체 데이터를 포함시킵니다.
         hourlyUv[h] = parseFloat(interpolatedValue.toFixed(2));
       }

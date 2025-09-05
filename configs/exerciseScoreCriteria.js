@@ -59,17 +59,15 @@ export const seasonScoreCriteria = {
   },
 };
 
-
 /**
  * 운동 부적합으로 판단하여 점수 계산에서 제외하는 조건
  */
 export const exclusionConditions = {
-    temp: { min: 0, max: 31 },
-    humidity: { max: 90 },
-    pm10Grade: "매우나쁨",
-    pm25Grade: "매우나쁨",
+  temp: { min: 0, max: 31 },
+  humidity: { max: 90 },
+  pm10Grade: '매우나쁨',
+  pm25Grade: '매우나쁨',
 };
-
 
 // --- 점수 계산 기준표 ---
 
@@ -96,22 +94,22 @@ export const windSpeedThresholds = [
  * ✨ Key Improvement: if-else 문을 데이터 기반 구조로 변경하여 가독성과 유지보수성을 높였습니다.
  */
 export const humidityThresholds = [
-    { maxHumidity: 25, score: 60 },
-    { maxHumidity: 35, score: 80 },
-    { maxHumidity: 45, score: 95 },
-    { maxHumidity: 55, score: 100 }, // 최적 구간
-    { maxHumidity: 65, score: 90 },
-    { maxHumidity: 75, score: 70 },
-    { maxHumidity: 85, score: 50 },
-    // 85% 초과는 20점
+  { maxHumidity: 25, score: 60 },
+  { maxHumidity: 35, score: 80 },
+  { maxHumidity: 45, score: 95 },
+  { maxHumidity: 55, score: 100 }, // 최적 구간
+  { maxHumidity: 65, score: 90 },
+  { maxHumidity: 75, score: 70 },
+  { maxHumidity: 85, score: 50 },
+  // 85% 초과는 20점
 ];
 
 /**
  * 미세먼지 등급별 점수
  */
 export const airQualityGradeMap = {
-    "좋음": 100,
-    "보통": 85,
-    "나쁨": 30,
-    "매우나쁨": 0
+  좋음: 100,
+  보통: 85,
+  나쁨: 30,
+  매우나쁨: 0,
 };

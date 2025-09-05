@@ -5,7 +5,7 @@
 const common = {
   white: '#ffffff',
   black: '#0c0c0c',
-  
+
   // 상태(Status) 색상은 테마와 상관없이 일관성을 유지
   statusGood: '#0040D3',
   statusModerate: '#35B847',
@@ -55,14 +55,14 @@ const themes = {
     iconColor: '#393D46',
     cardBackground: 'rgba(255, 255, 255, 0.25)',
     statusBar: 'light-content',
-  }
+  },
 };
 
 // 3. 최종 PALETTE 객체 조합 및 내보내기
 export const PALETTE = {
   // 공통 색상에 쉽게 접근할 수 있도록 root에 추가
   common,
-  
+
   // 각 테마에 공통 색상과 고유 색상을 결합하여 완전한 테마 객체를 생성
   themes: {
     day: {

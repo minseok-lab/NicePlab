@@ -16,7 +16,7 @@ function getCurrentTimePeriod({ sunrise, sunset, dawn, dusk }) {
 
 export function useDynamicGradient() {
   const [timePeriod, setTimePeriod] = useState('day');
-  const [location, setLocation] = useState(null); 
+  const [location, setLocation] = useState(null);
 
   useEffect(() => {
     const setGradient = async () => {
@@ -36,7 +36,7 @@ export function useDynamicGradient() {
           return () => clearInterval(intervalId);
         }
       } catch (error) {
-        console.error("Failed to set dynamic gradient:", error.message);
+        console.error('Failed to set dynamic gradient:', error.message);
         setTimePeriod('day'); // 에러 발생 시 '낮' 테마로 fallback
       }
     };
@@ -47,7 +47,7 @@ export function useDynamicGradient() {
   // ▼▼▼ 핵심 변경사항 ▼▼▼
   // 더 이상 GRADIENT_SETTINGS를 사용하지 않고, PALETTE에서 직접 테마 정보를 가져옵니다.
   const currentTheme = PALETTE.themes[timePeriod];
-  
+
   return {
     // 새로운 PALETTE 구조에 맞게 반환값 수정
     colors: [currentTheme.gradient.start, currentTheme.gradient.end],

@@ -9,21 +9,57 @@ import * as icons from '../../assets/weatherIcon'; // index.js 파일은 생략 
 const WEATHER_CONDITIONS = {
   pty: {
     1: { dayIcon: icons.rainIcon, nightIcon: icons.darkRainIcon, text: '비' },
-    2: { dayIcon: icons.snowRainIcon, nightIcon: icons.darkSnowRainIcon, text: '비/눈' },
+    2: {
+      dayIcon: icons.snowRainIcon,
+      nightIcon: icons.darkSnowRainIcon,
+      text: '비/눈',
+    },
     3: { dayIcon: icons.snowIcon, nightIcon: icons.darkSnowIcon, text: '눈' },
-    4: { dayIcon: icons.rainIcon, nightIcon: icons.darkRainIcon, text: '소나기' },
-    5: { dayIcon: icons.rainIcon, nightIcon: icons.darkRainIcon, text: '빗방울' },
-    6: { dayIcon: icons.snowRainIcon, nightIcon: icons.darkSnowRainIcon, text: '빗방울/눈날림' },
-    7: { dayIcon: icons.snowIcon, nightIcon: icons.darkSnowIcon, text: '눈날림' },
+    4: {
+      dayIcon: icons.rainIcon,
+      nightIcon: icons.darkRainIcon,
+      text: '소나기',
+    },
+    5: {
+      dayIcon: icons.rainIcon,
+      nightIcon: icons.darkRainIcon,
+      text: '빗방울',
+    },
+    6: {
+      dayIcon: icons.snowRainIcon,
+      nightIcon: icons.darkSnowRainIcon,
+      text: '빗방울/눈날림',
+    },
+    7: {
+      dayIcon: icons.snowIcon,
+      nightIcon: icons.darkSnowIcon,
+      text: '눈날림',
+    },
   },
   sky: {
-    1: { dayIcon: icons.clearIcon, nightIcon: icons.darkClearIcon, text: '맑음' },
-    3: { dayIcon: icons.partlyCloudyIcon, nightIcon: icons.darkPartlyCloudyIcon, text: '구름많음' },
-    4: { dayIcon: icons.cloudyIcon, nightIcon: icons.darkCloudyIcon, text: '흐림' },
+    1: {
+      dayIcon: icons.clearIcon,
+      nightIcon: icons.darkClearIcon,
+      text: '맑음',
+    },
+    3: {
+      dayIcon: icons.partlyCloudyIcon,
+      nightIcon: icons.darkPartlyCloudyIcon,
+      text: '구름많음',
+    },
+    4: {
+      dayIcon: icons.cloudyIcon,
+      nightIcon: icons.darkCloudyIcon,
+      text: '흐림',
+    },
   },
 };
 
-const UNKNOWN_WEATHER = { dayIcon: icons.nullIcon, nightIcon: icons.darkNullIcon, text: '알 수 없음' };
+const UNKNOWN_WEATHER = {
+  dayIcon: icons.nullIcon,
+  nightIcon: icons.darkNullIcon,
+  text: '알 수 없음',
+};
 
 /**
  * 기능: 하늘상태(sky), 강수형태(pty) 코드와 낮/밤 여부를 받아 아이콘과 텍스트로 변환합니다.
@@ -34,9 +70,8 @@ const UNKNOWN_WEATHER = { dayIcon: icons.nullIcon, nightIcon: icons.darkNullIcon
  */
 export const formatWeather = (sky, pty, isDay) => {
   // pty 코드가 0보다 크면 강수 상태를, 아니면 하늘 상태를 확인합니다.
-  const condition = pty > 0
-    ? WEATHER_CONDITIONS.pty[pty]
-    : WEATHER_CONDITIONS.sky[sky];
+  const condition =
+    pty > 0 ? WEATHER_CONDITIONS.pty[pty] : WEATHER_CONDITIONS.sky[sky];
 
   // 날씨 정보가 없으면 UNKNOWN_WEATHER를 사용합니다.
   const weatherInfo = condition || UNKNOWN_WEATHER;

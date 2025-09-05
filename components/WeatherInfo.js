@@ -2,19 +2,36 @@
 
 // --- 1. Import Section (변경 없음) ---
 import { useState, useMemo } from 'react';
-import { ScrollView, View, Text, Button, Linking, TouchableOpacity } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  Button,
+  Linking,
+  TouchableOpacity,
+} from 'react-native';
 import { fetchPlabMatchDetails } from '../api';
 import { getBestExerciseTimes } from '../utils';
 import { useDynamicGradient } from '../hooks';
-import { getGlobalStyles, getRecommendTimeCardStyles, PALETTE } from '../styles';
+import {
+  getGlobalStyles,
+  getRecommendTimeCardStyles,
+  PALETTE,
+} from '../styles';
 import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 import LoadingIndicator from './LoadingIndicator';
 
 // --- Main Component ---
-const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUpdateTime, season, }) => {
-
+const WeatherInfo = ({
+  weatherData,
+  liveData,
+  plabMatches = [],
+  plabLink,
+  lastUpdateTime,
+  season,
+}) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
   const { state, location } = useDynamicGradient();
   const theme = PALETTE.themes[state];
@@ -40,7 +57,12 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
     plabMatches.forEach(match => {
       const matchDate = new Date(match.schedule);
       // 'YYYY-MM-DDTHH:00:00.000Z' 형태로 시간 키를 정규화합니다.
-      const hourKey = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate(), matchDate.getHours()).toISOString();
+      const hourKey = new Date(
+        matchDate.getFullYear(),
+        matchDate.getMonth(),
+        matchDate.getDate(),
+        matchDate.getHours(),
+      ).toISOString();
       if (!matchesByHour.has(hourKey)) {
         matchesByHour.set(hourKey, []);
       }
@@ -48,7 +70,10 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
     });
 
     // 3. 날씨 점수 기반 상위 후보 선정 (변경 없음)
-    const bestWeatherCandidates = getBestExerciseTimes(weatherData.list, season).slice(0, 25);
+    const bestWeatherCandidates = getBestExerciseTimes(
+      weatherData.list,
+      season,
+    ).slice(0, 25);
 
     const filteredWithMatches = [];
 
@@ -65,7 +90,7 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
           matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함!
         });
       }
-      
+
       // 7. 최종 목록이 10개가 채워지면 종료 (변경 없음)
       if (filteredWithMatches.length === 10) {
         break;
@@ -75,7 +100,6 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
     return filteredWithMatches;
   }, [weatherData, season, plabMatches]);
 
-
   // --- 💡 [개선] Event Handlers ---
   const handleToggleCard = async (timestamp, matchesToFetch) => {
     if (expandedTimestamp === timestamp) {
@@ -83,20 +107,29 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
       return;
     }
     setExpandedTimestamp(timestamp);
-    
+
     // 💡 [로직 개선] 더 이상 plabMatches를 필터링할 필요 없이,
     // 클릭된 항목에 포함된 matchesToFetch를 바로 사용합니다.
-    if (detailedMatches[timestamp] || !matchesToFetch || matchesToFetch.length === 0) {
+    if (
+      detailedMatches[timestamp] ||
+      !matchesToFetch ||
+      matchesToFetch.length === 0
+    ) {
       return;
     }
 
     setLoadingTimestamps(prev => new Set(prev).add(timestamp));
     try {
-      const detailPromises = matchesToFetch.map(match => fetchPlabMatchDetails(match.id));
+      const detailPromises = matchesToFetch.map(match =>
+        fetchPlabMatchDetails(match.id),
+      );
       const results = await Promise.all(detailPromises);
-      setDetailedMatches(prev => ({ ...prev, [timestamp]: results.filter(Boolean) }));
+      setDetailedMatches(prev => ({
+        ...prev,
+        [timestamp]: results.filter(Boolean),
+      }));
     } catch (error) {
-      console.error("Failed to fetch match details:", error);
+      console.error('Failed to fetch match details:', error);
     } finally {
       setLoadingTimestamps(prev => {
         const newSet = new Set(prev);
@@ -116,29 +149,32 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
     <ScrollView>
       <LiveWeatherCard liveData={liveData} location={location} />
       <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
-      
+
       {finalRecommendedSlots.length > 0 ? (
-        finalRecommendedSlots.map((weatherItem) => {
+        finalRecommendedSlots.map(weatherItem => {
           // 💡 [오류 수정] 이제 weatherItem에서 matches를 정상적으로 가져올 수 있습니다.
           const { dt: timestamp, matches } = weatherItem;
           const isExpanded = expandedTimestamp === timestamp;
           const isLoading = loadingTimestamps.has(timestamp);
-          
+
           // 💡 [로직 개선] 상세 정보가 로딩되기 전에는 weatherItem에 포함된 기본 매치 정보를 사용합니다.
           const matchesForThisSlot = detailedMatches[timestamp] || matches;
 
           return (
             // 1. TouchableOpacity는 터치 이벤트만 담당하고 스타일은 가지지 않습니다.
-            <TouchableOpacity 
+            <TouchableOpacity
               key={timestamp}
               onPress={() => handleToggleCard(timestamp, matches)}
               activeOpacity={0.8}
             >
               {/* 2. 시각적인 스타일(배경, 그림자 등)은 내부의 View가 담당합니다. */}
               <View style={forcastCardStyles.cardContainer}>
-                <RecommendTimeCard weatherItem={weatherItem} location={location} />
+                <RecommendTimeCard
+                  weatherItem={weatherItem}
+                  location={location}
+                />
                 {isExpanded && (
-                  <MatchDetails 
+                  <MatchDetails
                     isLoading={isLoading}
                     matches={matchesForThisSlot}
                     theme={theme}
@@ -149,23 +185,31 @@ const WeatherInfo = ({ weatherData, liveData, plabMatches = [], plabLink, lastUp
           );
         })
       ) : (
-        <Text style={globalStyles.noDataText}>추천할 만한 시간대가 없네요.</Text>
+        <Text style={globalStyles.noDataText}>
+          추천할 만한 시간대가 없네요.
+        </Text>
       )}
 
       {/* 하단 버튼 및 푸터 (변경 없음) */}
       <View style={globalStyles.buttonContainer}>
-        <Button 
-          title="플랩에서 더 많은 매치 찾기" 
+        <Button
+          title="플랩에서 더 많은 매치 찾기"
           onPress={() => Linking.openURL(plabLink)}
         />
       </View>
       <View style={globalStyles.footerContainer}>
-        <Text style={globalStyles.footerText}>기상정보출처: 기상청, 에어코리아</Text>
-        <Text style={globalStyles.footerText}>날씨 아이콘 : Google Weather API</Text>
+        <Text style={globalStyles.footerText}>
+          기상정보출처: 기상청, 에어코리아
+        </Text>
+        <Text style={globalStyles.footerText}>
+          날씨 아이콘 : Google Weather API
+        </Text>
         <Text style={globalStyles.footerText}>업데이트 {lastUpdateTime}</Text>
         <Text style={globalStyles.footerText}> </Text>
         <Text style={globalStyles.footerText}>플랩 매치 출처: 플랩풋볼</Text>
-        <Text style={globalStyles.footerText}>Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.</Text>
+        <Text style={globalStyles.footerText}>
+          Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.
+        </Text>
         <Text style={globalStyles.footerText}> </Text>
       </View>
     </ScrollView>

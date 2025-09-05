@@ -10,95 +10,100 @@ import { AIR_KOREA_STATIONS } from '../constants/airKoreaStations';
 // --- 2. 좌표 변환 및 지역 코드 검색 함수들 (기존 코드와 동일) ---
 
 function convertGpsToGrid(lat, lon) {
-    // ... (기존 convertGpsToGrid 함수 내용 그대로)
-    const RE = 6371.00877; 
-    const GRID = 5.0; 
-    const SLAT1 = 30.0; 
-    const SLAT2 = 60.0; 
-    const OLON = 126.0; 
-    const OLAT = 38.0; 
-    const XO = 43; 
-    const YO = 136; 
-    const DEGRAD = Math.PI / 180.0;
- 
-    const re = RE / GRID;
-    const slat1 = SLAT1 * DEGRAD;
-    const slat2 = SLAT2 * DEGRAD;
-    const olon = OLON * DEGRAD;
-    const olat = OLAT * DEGRAD;
- 
-    let sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
-    sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
-    let sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
-    sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
-    let ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
-    ro = re * sf / Math.pow(ro, sn);
- 
-    let ra = Math.tan(Math.PI * 0.25 + (lat) * DEGRAD * 0.5);
-    ra = re * sf / Math.pow(ra, sn);
-    let theta = lon * DEGRAD - olon;
-    if (theta > Math.PI) theta -= 2.0 * Math.PI;
-    if (theta < -Math.PI) theta += 2.0 * Math.PI;
-    theta *= sn;
-    
-    const nx = Math.floor(ra * Math.sin(theta) + XO + 0.5);
-    const ny = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+  // ... (기존 convertGpsToGrid 함수 내용 그대로)
+  const RE = 6371.00877;
+  const GRID = 5.0;
+  const SLAT1 = 30.0;
+  const SLAT2 = 60.0;
+  const OLON = 126.0;
+  const OLAT = 38.0;
+  const XO = 43;
+  const YO = 136;
+  const DEGRAD = Math.PI / 180.0;
 
-    return { nx, ny };
+  const re = RE / GRID;
+  const slat1 = SLAT1 * DEGRAD;
+  const slat2 = SLAT2 * DEGRAD;
+  const olon = OLON * DEGRAD;
+  const olat = OLAT * DEGRAD;
+
+  let sn =
+    Math.tan(Math.PI * 0.25 + slat2 * 0.5) /
+    Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+  sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+  let sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+  sf = (Math.pow(sf, sn) * Math.cos(slat1)) / sn;
+  let ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+  ro = (re * sf) / Math.pow(ro, sn);
+
+  let ra = Math.tan(Math.PI * 0.25 + lat * DEGRAD * 0.5);
+  ra = (re * sf) / Math.pow(ra, sn);
+  let theta = lon * DEGRAD - olon;
+  if (theta > Math.PI) theta -= 2.0 * Math.PI;
+  if (theta < -Math.PI) theta += 2.0 * Math.PI;
+  theta *= sn;
+
+  const nx = Math.floor(ra * Math.sin(theta) + XO + 0.5);
+  const ny = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+
+  return { nx, ny };
 }
 
 function findClosestAreaCode(grid) {
-    // ... (기존 findClosestAreaCode 함수 내용 그대로)
-    let closestArea = null;
-    let minDistance = Infinity;
- 
-    for (const area of KMA_AREA_CODES) {
-      if (area['gridX'] && area['gridY']) {
-        const dx = area['gridX'] - grid.nx;
-        const dy = area['gridY'] - grid.ny;
-        const distance = dx * dx + dy * dy;
- 
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestArea = area;
-        }
+  // ... (기존 findClosestAreaCode 함수 내용 그대로)
+  let closestArea = null;
+  let minDistance = Infinity;
+
+  for (const area of KMA_AREA_CODES) {
+    if (area.gridX && area.gridY) {
+      const dx = area.gridX - grid.nx;
+      const dy = area.gridY - grid.ny;
+      const distance = dx * dx + dy * dy;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestArea = area;
       }
     }
-    return closestArea ? String(closestArea['행정구역코드']) : '4117300000';
+  }
+  return closestArea ? String(closestArea['행정구역코드']) : '4117300000';
 }
 
 // --- 3. 위치 정보 처리 함수들 (기존 코드와 동일) ---
 
 export async function getUserLocationAndAddress() {
-    // ... (기존 getUserLocationAndAddress 함수 내용 그대로)
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-        throw new Error('Permission to access location was denied.');
-    }
+  // ... (기존 getUserLocationAndAddress 함수 내용 그대로)
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error('Permission to access location was denied.');
+  }
 
-    const location = await Location.getCurrentPositionAsync({});
-    const addresses = await Location.reverseGeocodeAsync(location.coords);
+  const location = await Location.getCurrentPositionAsync({});
+  const addresses = await Location.reverseGeocodeAsync(location.coords);
 
-    if (!addresses || addresses.length === 0) {
-        throw new Error('Failed to reverse geocode location.');
-    }
+  if (!addresses || addresses.length === 0) {
+    throw new Error('Failed to reverse geocode location.');
+  }
 
-    return { coords: location.coords, address: addresses[0] };
+  return { coords: location.coords, address: addresses[0] };
 }
 
 function getKmaAreaInfo(coords) {
-    // ... (기존 getKmaAreaInfo 함수 내용 그대로)
-    const grid = convertGpsToGrid(coords.latitude, coords.longitude);
-    const areaNo = findClosestAreaCode(grid);
-    return { grid, areaNo };
+  // ... (기존 getKmaAreaInfo 함수 내용 그대로)
+  const grid = convertGpsToGrid(coords.latitude, coords.longitude);
+  const areaNo = findClosestAreaCode(grid);
+  return { grid, areaNo };
 }
 
 function findPlabRegionInfo(address) {
-  console.log("📍[디버깅] findPlabRegionInfo가 받은 주소:", JSON.stringify(address, null, 2));
+  console.log(
+    '📍[디버깅] findPlabRegionInfo가 받은 주소:',
+    JSON.stringify(address, null, 2),
+  );
   const { region, city, district } = address;
-  
+
   // 👇 [수정] city를 district보다 우선적으로 사용하도록 순서를 변경합니다.
-  const currentCity = city || district; 
+  const currentCity = city || district;
 
   if (!region || !currentCity) {
     return null;
@@ -106,11 +111,13 @@ function findPlabRegionInfo(address) {
 
   let airQualityRegion = region;
   if (region === '경기도') {
-    airQualityRegion = GYEONGGI_BUKBU_CITIES.includes(currentCity) ? '경기북부' : '경기남부';
+    airQualityRegion = GYEONGGI_BUKBU_CITIES.includes(currentCity)
+      ? '경기북부'
+      : '경기남부';
   }
 
   const foundGroup = PLAB_REGIONS.find(group =>
-    region.includes(group.area_group_name.substring(0, 2))
+    region.includes(group.area_group_name.substring(0, 2)),
   );
 
   if (!foundGroup) {
@@ -119,17 +126,17 @@ function findPlabRegionInfo(address) {
 
   const userCityNormalized = currentCity.replace(/[시군구]$/, '');
 
-  const foundArea = foundGroup.areas.find(area => 
+  const foundArea = foundGroup.areas.find(area =>
     area.area_name.some(dataName => {
       const dataNameNormalized = dataName.replace(/[시군구]$/, '');
       return dataNameNormalized === userCityNormalized;
-    })
+    }),
   );
 
   if (!foundArea) {
     return null;
   }
-  
+
   const suffix = currentCity.endsWith('구') ? '구' : '시';
 
   const citiesInArea = foundArea.area_name.map(name => {
@@ -164,7 +171,6 @@ function findClosestKMAStationId({ latitude, longitude }) {
   return closestStation ? closestStation.id : '119'; // 못찾으면 수원(안양 근처)을 기본값으로
 }
 
-
 /**
  * ⭐ (수정) 위경도 기반으로 가까운 순서대로 '대기질 측정소 목록'을 반환하는 함수
  * @param {object} coords - { latitude, longitude }
@@ -196,14 +202,14 @@ async function getGpsBasedRegionInfo() {
     }
     const kmaInfo = getKmaAreaInfo(coords);
     const stationId = findClosestKMAStationId(coords);
-    
+
     // 👇 [추가] 새로 만든 함수를 호출합니다.
     const stationList = getStationsSortedByDistance(coords);
 
     // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
     return { ...plabInfo, ...kmaInfo, stationId, stationList };
   } catch (error) {
-    console.error("Failed to get GPS-based region information:", error.message);
+    console.error('Failed to get GPS-based region information:', error.message);
     return null;
   }
 }
@@ -219,10 +225,11 @@ function getCurrentLocationInfo() {
     areaNo: '4117300000',
     grid: { nx: 60, ny: 121 },
     stationId: '119', // 안양시에서 가장 가까운 수원 관측소 ID
-    stationList: [ { stationName: '부림동', "lat": 37.394295443, "lon": 126.956832814 } ]
+    stationList: [
+      { stationName: '부림동', lat: 37.394295443, lon: 126.956832814 },
+    ],
   };
 }
-
 
 // --- 6. 메인 로직: 위치 이름에 따라 정보 소스를 선택 (⭐ 수정된 메인 함수) ---
 /**
@@ -230,23 +237,25 @@ function getCurrentLocationInfo() {
  * @param {string} locationName - 지역 이름 (예: "내 위치", "현재 위치")
  * @returns {Promise<object|null>} 지역 정보 객체 또는 null
  */
-export const getWeatherLocationInfo = async (locationName = "내 위치") => {
-    if (locationName === "현재 위치") {
-        console.log("✅ '현재 위치'(안양시)에 대한 고정 정보를 반환합니다.");
-        return getCurrentLocationInfo();
-    }
-    
-    // "내 위치" 또는 그 외의 경우, GPS 기반으로 실제 위치를 탐색합니다.
-    console.log("🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다.");
-    const regionInfo = await getGpsBasedRegionInfo();
+export const getWeatherLocationInfo = async (locationName = '내 위치') => {
+  if (locationName === '현재 위치') {
+    console.log("✅ '현재 위치'(안양시)에 대한 고정 정보를 반환합니다.");
+    return getCurrentLocationInfo();
+  }
 
-    // GPS 정보 획득 실패 시, '현재 위치'(안양시) 정보로 대체합니다.
-    if (!regionInfo) {
-        console.warn("GPS 위치 정보 획득에 실패하여 '현재 위치'(안양시) 정보로 대체합니다.");
-        return getCurrentLocationInfo();
-    }
+  // "내 위치" 또는 그 외의 경우, GPS 기반으로 실제 위치를 탐색합니다.
+  console.log('🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다.');
+  const regionInfo = await getGpsBasedRegionInfo();
 
-    return regionInfo;
+  // GPS 정보 획득 실패 시, '현재 위치'(안양시) 정보로 대체합니다.
+  if (!regionInfo) {
+    console.warn(
+      "GPS 위치 정보 획득에 실패하여 '현재 위치'(안양시) 정보로 대체합니다.",
+    );
+    return getCurrentLocationInfo();
+  }
+
+  return regionInfo;
 };
 
 // --- 7. 에러 발생 시 사용할 기본값 (기존과 동일, 이제 getCurrentLocationInfo로 대체 가능) ---

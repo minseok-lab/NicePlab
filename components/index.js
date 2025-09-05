@@ -10,7 +10,6 @@ import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 export * from './SeasonDecision';
 
-
 // 2. 가져온 컴포넌트들을 named export 방식으로 내보냅니다.
 export {
   WeatherInfo,

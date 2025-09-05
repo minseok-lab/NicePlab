@@ -10,7 +10,7 @@ const ErrorMessage = ({ message }) => {
   const { state } = useDynamicGradient();
   const theme = PALETTE.themes[state];
   const styles = getGlobalStyles(theme);
-  
+
   // ▼ 3. 동적으로 생성된 스타일을 적용합니다.
   return <Text style={styles.error}>{message}</Text>;
 };

@@ -1,0 +1,7 @@
+# .eslintignore 파일
+# 이 파일에 적힌 파일이나 폴더는 ESLint가 검사하지 않습니다.
+
+node_modules/
+babel.config.js
+metro.config.js
+.eslintrc.js

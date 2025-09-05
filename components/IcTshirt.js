@@ -1,8 +1,8 @@
 // components/IcTshirt.js
 // 원본 파일 : https://d31wz4d3hgve8q.cloudfront.net/static/img/ic_tshirt.svg
 
-import Svg, { Path } from "react-native-svg";
-const SvgIcTshirt = (props) => (
+import Svg, { Path } from 'react-native-svg';
+const SvgIcTshirt = props => (
   <Svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"

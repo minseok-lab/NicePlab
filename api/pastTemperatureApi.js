@@ -6,7 +6,6 @@ import { apiClient } from './apiClient';
 // 2) 내부 모듈 (상수)
 import { API_ENDPOINTS, KMA_PAST_TEMPERATURE_API_KEY } from '../constants';
 
-
 // --- Main Export Function ---
 
 /**
@@ -19,21 +18,22 @@ export const fetchPastTemperature = async (stationId = '108') => {
   // 1. 조회할 날짜 범위 계산 (어제부터 10일 전까지)
   const { startDate, endDate } = getPastDateRange(15);
 
-  console.log(`[과거 기온 API] ➡️ 요청 시작: ${startDate}부터 ${endDate}까지 데이터를 요청합니다.`);
-  
+  console.log(
+    `[과거 기온 API] ➡️ 요청 시작: ${startDate}부터 ${endDate}까지 데이터를 요청합니다.`,
+  );
+
   // 2. API를 통해 데이터 호출 및 파싱
   const pastData = await fetchAsosData(stationId, startDate, endDate);
 
   // 3. 결과 반환
   if (!pastData || pastData.length === 0) {
-    console.error("과거 기온 데이터를 가져오는데 실패했습니다.");
+    console.error('과거 기온 데이터를 가져오는데 실패했습니다.');
     return null;
   }
 
   console.log('[과거 기온 API] ✅ 요청 성공: 데이터 수신 및 파싱 완료.');
   return { list: pastData };
 };
-
 
 // --- Helper Functions ---
 
@@ -50,7 +50,7 @@ function getPastDateRange(daysAgo) {
   const startDateObj = new Date(today);
   startDateObj.setDate(today.getDate() - daysAgo); // 10일 전
 
-  const formatDate = (date) => {
+  const formatDate = date => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -76,16 +76,19 @@ async function fetchAsosData(stationId, startDate, endDate) {
   const data = await apiClient(requestUrl, '기상청 ASOS 일자료');
 
   if (data?.response?.body?.items?.item) {
-        // ✨ 이 라인에서 'const parsedData ='가 누락되지 않았는지 확인해주세요.
-        const parsedData = parseAsosData(data.response.body.items.item);
-        
-        console.log(`[과거 기온 API] 수신된 데이터 일수: ${parsedData.length}일`);
+    // ✨ 이 라인에서 'const parsedData ='가 누락되지 않았는지 확인해주세요.
+    const parsedData = parseAsosData(data.response.body.items.item);
 
-        return parsedData;
-    } else {
-        console.warn(`[과거 기온 API] 데이터 없음. 응답:`, data?.response?.header?.resultMsg);
-        return null;
-    }
+    console.log(`[과거 기온 API] 수신된 데이터 일수: ${parsedData.length}일`);
+
+    return parsedData;
+  } else {
+    console.warn(
+      `[과거 기온 API] 데이터 없음. 응답:`,
+      data?.response?.header?.resultMsg,
+    );
+    return null;
+  }
 }
 
 /**

@@ -16,7 +16,9 @@ export const apiClient = async (url, apiName = 'API') => {
 
     // HTTP 상태 코드가 2xx가 아닐 경우 에러로 처리합니다.
     if (!response.ok) {
-      console.error(`[${apiName}] HTTP 에러! Status: ${response.status}, 응답: ${responseText}`);
+      console.error(
+        `[${apiName}] HTTP 에러! Status: ${response.status}, 응답: ${responseText}`,
+      );
       return null;
     }
 
@@ -29,12 +31,14 @@ export const apiClient = async (url, apiName = 'API') => {
     // 텍스트를 JSON으로 파싱합니다.
     const data = JSON.parse(responseText);
     return data;
-
   } catch (error) {
     // 네트워크 에러 또는 JSON 파싱 에러를 처리합니다.
     if (error instanceof SyntaxError) {
       // JSON 파싱 에러일 경우, 원본 텍스트를 함께 로깅하여 디버깅을 돕습니다.
-      console.error(`[${apiName}] JSON 파싱 실패. 응답: ${responseText}`, error);
+      console.error(
+        `[${apiName}] JSON 파싱 실패. 응답: ${responseText}`,
+        error,
+      );
     } else {
       // 그 외 네트워크 등의 에러
       console.error(`[${apiName}] 요청 실패.`, error);
