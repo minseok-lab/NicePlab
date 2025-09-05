@@ -14,6 +14,11 @@ export const getGlobalStyles = theme =>
       marginTop: 10,
       marginBottom: 10,
       marginHorizontal: 30,
+      resizeMode: 'contain',
+    },
+    // ScrollView의 contentContainerStyle에 적용할 스타일을 추가합니다.
+    scrollViewContent: {
+      flexGrow: 1,
     },
     subHeader: {
       fontSize: 20,
@@ -27,6 +32,11 @@ export const getGlobalStyles = theme =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    // 로딩 인디케이터의 텍스트 스타일을 정의합니다.
+    loadingText: {
+      marginTop: 15,
+      color: theme.textSecondary,
     },
     buttonContainer: {
       marginTop: 8,

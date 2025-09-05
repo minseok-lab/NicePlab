@@ -25,8 +25,8 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
   const apiRegionName = REGION_NAME_MAP[sidoName] || sidoName;
   const requestUrl = `${API_ENDPOINTS.AIR_QUALITY_FORCAST}?serviceKey=${AIR_QUALITY_API_KEY}&returnType=json&numOfRows=100&pageNo=1&searchDate=${dateString}&InformCode=${informCode}`;
 
-  console.log(`\n--- [${informCode}] 미세먼지 데이터 조회 시작 ---`);
-  console.log(`1. 조회 지역: ${sidoName}`);
+  console.log(`[미세먼지 예보] ➡️ ${informCode} 미세먼지 데이터 조회 시작`);
+  console.log(`[미세먼지 예보] ➡️ 조회 지역: ${sidoName}`);
 
   // ✨ try-catch 블록 대신 apiClient를 사용합니다.
   const data = await apiClient(requestUrl, `미세먼지 ${informCode}`);
@@ -45,15 +45,18 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
           const grade = parts[1].trim();
 
           if (region === apiRegionName) {
-            console.log(`2. '${sidoName}' 지역의 예보 등급:`, grade);
-            console.log(`--- [${informCode}] 조회 성공 ---`);
+            console.log(
+              `[미세먼지 예보] '${sidoName}' 지역의 예보 등급 ➡️`,
+              grade,
+            );
+            console.log(`[미세먼지 예보] ✅ ${informCode} 조회 성공`);
             return grade; // 일치하는 지역을 찾으면 바로 등급을 반환
           }
         }
       }
     }
   }
-  console.log(`--- [${informCode}] 조회 실패: 데이터 없음 ---`);
+  console.log(`[미세먼지 예보] ❌ ${informCode} 조회 실패: 데이터 없음`);
   return '정보없음';
 };
 
@@ -91,8 +94,9 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
     stationName,
   )}&dataTerm=DAILY&ver=1.3`;
 
-  console.log(`\n--- [현재값] 미세먼지 데이터 조회 시작 ---`);
-  console.log(`1. 조회 측정소: ${stationName}`);
+  console.log(
+    `[현재 미세먼지] ➡️ 데이터 조회 시작, 조회 측정소: ${stationName}`,
+  );
 
   try {
     const data = await apiClient(requestUrl, `현재 미세먼지`);
@@ -110,7 +114,7 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
         latestData.pm25Flag === '통신장애'
       ) {
         console.log(
-          `--- [현재값] 조회 실패: '${stationName}' 측정소의 데이터가 유효하지 않습니다 (점검 또는 통신장애). ---`,
+          `[현재 미세먼지] ❌ 조회 실패: '${stationName}' 측정소의 데이터가 유효하지 않습니다 (점검 또는 통신장애).`,
         );
         // ❗️ 실패로 처리하여 다음 측정소를 시도하도록 null 반환
         return null;
@@ -118,8 +122,7 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
       // --- 👆 여기까지 수정 ---
 
       // 유효성 검사를 통과한 경우에만 데이터를 반환합니다.
-      console.log(`2. '${stationName}' 측정소의 현재 데이터:`, latestData);
-      console.log(`--- [현재값] 조회 성공 ---`);
+      console.log(`[현재 미세먼지] ✅ 조회 성공`);
 
       return {
         pm10Value: latestData.pm10Value,
@@ -127,11 +130,11 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
         dataTime: latestData.dataTime,
       };
     } else {
-      console.log(`--- [현재값] 조회 실패: 데이터 없음 ---`);
+      console.log(`[현재 미세먼지] ❌ 조회 실패: 데이터 없음`);
       return null;
     }
   } catch (error) {
-    console.error('Failed to fetch Current Air Quality data:', error);
+    console.error('❌ Failed to fetch Current Air Quality data:', error);
     return null;
   }
 };

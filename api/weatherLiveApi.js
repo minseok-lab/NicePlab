@@ -37,7 +37,6 @@ export const fetchKmaLiveWeather = async grid => {
  */
 function getApiBaseDateTimeForLive() {
   let now = new Date();
-  let hours = now.getHours();
   let minutes = now.getMinutes();
 
   // API 데이터는 보통 30-40분 후에 생성되므로, 안정적으로 한 시간 전 데이터를 요청합니다.

@@ -31,6 +31,7 @@ const WeatherInfo = ({
   plabLink,
   lastUpdateTime,
   season,
+  daylightInfo,
 }) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
   const { state, location } = useDynamicGradient();
@@ -147,7 +148,11 @@ const WeatherInfo = ({
   // --- Render ---
   return (
     <ScrollView>
-      <LiveWeatherCard liveData={liveData} location={location} />
+      <LiveWeatherCard
+        liveData={liveData}
+        location={location}
+        daylightInfo={daylightInfo}
+      />
       <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
 
       {finalRecommendedSlots.length > 0 ? (

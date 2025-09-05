@@ -19,7 +19,9 @@ export const fetchKmaWeatherForcast = async grid => {
 
   // 1. 가장 최신 발표 시간을 기준으로 API 요청 시도
   const latest = getApiBaseDateTime(now);
-  console.log(`1차 시도: 가장 최신 예보(${latest.baseTime})를 요청합니다.`);
+  console.log(
+    `[날씨 예보 API] ➡️ 1차 시도: 가장 최신 예보(${latest.baseTime})를 요청합니다.`,
+  );
   let weatherList = await fetchAndParseData(
     grid,
     latest.baseDate,
@@ -29,7 +31,7 @@ export const fetchKmaWeatherForcast = async grid => {
   // 2. 만약 최신 데이터가 없다면 (지연 발생), 3시간 전 예보로 다시 요청
   if (!weatherList || weatherList.length === 0) {
     console.warn(
-      `최신 예보(${latest.baseTime})를 가져오지 못했습니다. 이전 예보로 다시 시도합니다.`,
+      `[날씨 예보 API] ➡️ 최신 예보(${latest.baseTime})를 가져오지 못했습니다. 이전 예보로 다시 시도합니다.`,
     );
     const previousTime = new Date(now.getTime() - 3 * 60 * 60 * 1000); // 3시간 전
     const previous = getApiBaseDateTime(previousTime);
@@ -43,7 +45,7 @@ export const fetchKmaWeatherForcast = async grid => {
 
   // 최종적으로 데이터 가져오기에 실패한 경우
   if (!weatherList || weatherList.length === 0) {
-    console.error('데이터를 가져오는데 최종 실패했습니다.');
+    console.error('[날씨 예보 API] ❌  데이터를 가져오는데 최종 실패했습니다.');
     return null;
   }
 
@@ -112,20 +114,20 @@ function getApiBaseDateTime(dateObj) {
 async function fetchAndParseData(grid, baseDate, baseTime) {
   const requestUrl = `${API_ENDPOINTS.KMA_FORCAST_WEATHER}?serviceKey=${KMA_FORCAST_WEATHER_API_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
   console.log(
-    `[날씨 API] ➡️ 요청 시작: BaseDate=${baseDate}, BaseTime=${baseTime}`,
+    `[날씨 예보 API] ➡️ 요청 시작: BaseDate=${baseDate}, BaseTime=${baseTime}`,
   );
   // apiClient가 fetch, 에러 처리, JSON 파싱을 모두 담당합니다.
   const data = await apiClient(requestUrl, '기상청 단기예보');
 
   if (data?.response?.body?.items?.item) {
     console.log(
-      `[날씨 API] ✅ 요청 성공: ${baseDate} ${baseTime} 데이터 수신 완료.`,
+      `[날씨 예보 API] ✅ 요청 성공: ${baseDate} ${baseTime} 데이터 수신 완료.`,
     );
     return parseKmaData(data.response.body.items.item);
   } else {
     // API 호출은 성공했지만, 내용이 없는 경우
     console.warn(
-      `[${baseDate} ${baseTime}] 예보 데이터 없음. 응답:`,
+      `[날씨 예보 API] ❌ ${baseDate} ${baseTime} 예보 데이터 없음. 응답:`,
       data?.response?.header?.resultMsg,
     );
     return null;
@@ -174,3 +176,57 @@ function parseKmaData(items) {
 
   return Object.values(weatherDataByTime);
 }
+
+/**
+ * '초단기예보' API 요청에 필요한 base_date와 base_time을 계산합니다.
+ * 매시 45분 이후에 현재 시간 데이터 요청이 가능합니다.
+ */
+function getApiBaseDateTimeForUltraShortTerm() {
+  let now = new Date();
+  // API 데이터는 보통 45분 후에 생성되므로, 45분 이전에는 한 시간 전 데이터를 요청합니다.
+  if (now.getMinutes() < 45) {
+    now.setHours(now.getHours() - 1);
+  }
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const baseTime = String(now.getHours()).padStart(2, '0') + '30'; // 초단기예보는 30분 단위 발표
+
+  return { baseDate: `${year}${month}${day}`, baseTime };
+}
+
+/**
+ * '초단기예보' API를 호출하여 현재 시간의 하늘상태(SKY) 값을 가져옵니다.
+ * @param {object} grid - {nx, ny} 좌표
+ * @returns {number|null} - 성공 시 SKY 코드(1, 3, 4), 실패 시 null
+ */
+export const fetchCurrentSkyCondition = async grid => {
+  const { baseDate, baseTime } = getApiBaseDateTimeForUltraShortTerm();
+  // API 엔드포인트는 기존 예보와 다를 수 있으므로 확인이 필요합니다.
+  // 여기서는 기존 단기예보 엔드포인트를 사용한다고 가정합니다.
+  const requestUrl = `${API_ENDPOINTS.KMA_ULTRA_SHORT_TERM_FORCAST_WEATHER}?serviceKey=${KMA_FORCAST_WEATHER_API_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
+
+  console.log(
+    `[SKY 정보 API] ➡️ 요청 시작: BaseDate=${baseDate}, BaseTime=${baseTime}`,
+  );
+  const data = await apiClient(requestUrl, '기상청 초단기예보(SKY)');
+
+  if (data?.response?.body?.items?.item) {
+    // 여러 예보 항목 중 'SKY' 카테고리를 찾습니다.
+    const skyItem = data.response.body.items.item.find(
+      item => item.category === 'SKY',
+    );
+
+    if (skyItem) {
+      const skyValue = Number(skyItem.fcstValue);
+      console.log(
+        `[SKY 정보 API] ✅ 요청 성공: 현재 SKY 값은 [${skyValue}] 입니다.`,
+      );
+      return skyValue;
+    }
+  }
+
+  console.error('[SKY 정보 API] ❌ SKY 값을 가져오는 데 실패했습니다.');
+  return null; // 실패 시 null 반환
+};

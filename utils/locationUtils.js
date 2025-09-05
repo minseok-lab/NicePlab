@@ -96,10 +96,6 @@ function getKmaAreaInfo(coords) {
 }
 
 function findPlabRegionInfo(address) {
-  console.log(
-    '📍[디버깅] findPlabRegionInfo가 받은 주소:',
-    JSON.stringify(address, null, 2),
-  );
   const { region, city, district } = address;
 
   // 👇 [수정] city를 district보다 우선적으로 사용하도록 순서를 변경합니다.
@@ -207,7 +203,7 @@ async function getGpsBasedRegionInfo() {
     const stationList = getStationsSortedByDistance(coords);
 
     // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
-    return { ...plabInfo, ...kmaInfo, stationId, stationList };
+    return { coords, ...plabInfo, ...kmaInfo, stationId, stationList };
   } catch (error) {
     console.error('Failed to get GPS-based region information:', error.message);
     return null;

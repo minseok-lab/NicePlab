@@ -1,10 +1,6 @@
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  TouchableOpacity,
-  Linking,
-} from 'react-native';
+// components/MatchDetails.js
+
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 import { getMatchDetailsStyles } from '../styles';
 import { getTierFromLevel } from '../utils';
@@ -14,6 +10,7 @@ import {
   PLAB_SUPER_SUB,
 } from '../constants';
 import SvgIcTshirt from './IcTshirt';
+import LoadingIndicator from './LoadingIndicator';
 
 // --- Helper Functions ---
 // ✨ FIX: 함수가 문자열 대신 순수한 숫자 또는 null을 반환하도록 수정
@@ -55,11 +52,9 @@ const MatchDetails = ({ isLoading, matches, theme }) => {
 
   if (isLoading) {
     return (
-      <ActivityIndicator
-        size="small"
-        color={theme.textPrimary}
-        style={{ marginVertical: 10 }}
-      />
+      <View style={styles.loadingContainer}>
+        <LoadingIndicator size="small" text="매치 정보를 불러오는 중..." />
+      </View>
     );
   }
 
@@ -131,10 +126,10 @@ const MatchDetails = ({ isLoading, matches, theme }) => {
                   width="18"
                   height="18"
                   uri={badgeUrl}
-                  style={{ marginRight: 6 }}
+                  style={styles.badgeIcon}
                 />
               ) : (
-                <Text style={{ marginRight: 6 }}>📊</Text>
+                <Text style={styles.badgeIcon}>📊</Text>
               )}
               {/* ✨ FIX: 안전하게 레벨 정보를 화면에 표시합니다. */}
               <Text style={styles.matchDetailsText}>

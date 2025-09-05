@@ -49,7 +49,9 @@ export const fetchUvIndexForcast = async (areaNo = '4117300000') => {
 
     return { hourlyUv: interpolatedData, uvBaseDate: uvBaseDate };
   } else {
-    console.error('자외선 API 데이터가 없거나 형식이 올바르지 않습니다.');
+    console.error(
+      '[자외선 예보 API] ❌ 에러: 데이터가 없거나 형식이 올바르지 않습니다.',
+    );
     return null;
   }
 };
@@ -77,14 +79,9 @@ export const fetchCurrentUvIndex = async (areaNo = '4117300000') => {
     const finalKey = uvBaseDate.getHours() + hoursSinceBase;
 
     // --- 🐛 디버깅 로그 강화 ---
-    console.log('--- [현재 자외선 디버깅] ---');
-    console.log(`1. 현재 시간: ${now.toLocaleString()}`);
-    console.log(`2. 예보 기준 시간: ${uvBaseDate.toLocaleString()}`);
-    console.log(`3. 기준 시간으로부터 경과 시간: ${hoursSinceBase}시간`);
     console.log(
-      `4. 계산된 최종 키: ${finalKey} (기준시간 ${uvBaseDate.getHours()} + 경과 ${hoursSinceBase})`,
+      `[현재 자외선] ➡️ 계산된 최종 키: ${finalKey} (기준시간 ${uvBaseDate.getHours()} + 경과 ${hoursSinceBase})`,
     );
-    console.log('--------------------------');
 
     // 계산된 키로 현재 자외선 지수를 찾습니다.
     const currentUvIndex = hourlyUv[finalKey];

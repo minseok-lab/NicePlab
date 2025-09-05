@@ -13,6 +13,7 @@ import {
   fetchAirQualityForcast,
   fetchPastTemperature,
   fetchKmaLiveWeather, // 실시간 날씨
+  fetchCurrentSkyCondition,
   fetchCurrentAirQuality, // 실시간 대기질
   fetchCurrentUvIndex, // 실시간 자외선 지수 API
 } from '../api';
@@ -171,6 +172,7 @@ export const useWeather = (locationName = '내 위치') => {
         pastTempRes,
         forecastRes,
         liveWeatherRes,
+        currentSkyRes,
         uvForcastRes,
         airqualityForcastRes,
         currentAirRes,
@@ -179,6 +181,7 @@ export const useWeather = (locationName = '내 위치') => {
         fetchPastTemperature(locationInfo.stationId),
         fetchKmaWeatherForcast(locationInfo.grid),
         fetchKmaLiveWeather(locationInfo.grid),
+        fetchCurrentSkyCondition(locationInfo.grid),
         fetchUvIndexForcast(locationInfo.areaNo),
         fetchAirQualityForcast(locationInfo.airQualityRegion),
         fetchLiveAirQualityWithFallback(locationInfo.stationList),
@@ -212,6 +215,8 @@ export const useWeather = (locationName = '내 위치') => {
         liveWeatherRes.status === 'fulfilled'
           ? liveWeatherRes.value
           : cached.live;
+      const currentSkyValue =
+        currentSkyRes.status === 'fulfilled' ? currentSkyRes.value : null;
       const currentAirResult =
         currentAirRes.status === 'fulfilled' ? currentAirRes.value : null;
       const currentUvResult =
@@ -223,6 +228,7 @@ export const useWeather = (locationName = '내 위치') => {
         const combined = {
           locationName: locationInfo.currentCity,
           ...liveWeatherResult,
+          sky: currentSkyValue,
           pm10Grade: getDustGradeFromValue('pm10', currentAirResult?.pm10Value),
           pm25Grade: getDustGradeFromValue('pm25', currentAirResult?.pm25Value),
           uvIndex: currentUvIndex,

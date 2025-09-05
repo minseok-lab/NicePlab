@@ -20,7 +20,7 @@ async function fetchAllPagesForDate(dateString, regionId) {
     // 데이터 로드에 실패하면 루프를 중단합니다.
     if (!data) {
       console.warn(
-        `[Plab] Warning: ${dateString} 날짜의 페이지 ${pageCount}를 가져오지 못했습니다.`,
+        `⚽️ [Plab] Warning: ${dateString} 날짜의 페이지 ${pageCount}를 가져오지 못했습니다.`,
       );
       break;
     }
@@ -45,9 +45,7 @@ async function fetchAllPagesForDate(dateString, regionId) {
 // *** 수정된 부분: city 대신 cities 배열을 받습니다. ***
 export const fetchPlabMatches = async (weatherList, regionId, cities) => {
   console.log(
-    `⚽️ [플랩 API] 요청 지역: regionId=${regionId}, cities=${cities.join(
-      ', ',
-    )}`,
+    `⚽️ [Plab] 요청 지역: regionId=${regionId}, cities=${cities.join(', ')}`,
   );
   if (!weatherList || weatherList.length === 0) return [];
 
@@ -69,7 +67,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
     );
     const resultsByDate = await Promise.all(promises);
     console.log(
-      '[Plab] 모든 날짜의 페이지 로딩 완료. 데이터 필터링을 시작합니다.',
+      '⚽️ [Plab] 모든 날짜의 페이지 로딩 완료. 데이터 필터링을 시작합니다.',
     );
     const allMatches = resultsByDate.flat();
 
@@ -98,7 +96,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
         };
       });
     console.log(
-      `[Plab] 최종 매치 데이터 처리 완료. ${formattedAndFiltered.length}개의 매치를 반환합니다.`,
+      `⚽️ [Plab] 최종 매치 데이터 처리 완료. ${formattedAndFiltered.length}개의 매치를 반환합니다.`,
     );
     return formattedAndFiltered;
   } catch (error) {
@@ -120,7 +118,7 @@ export const fetchPlabMatchDetails = async matchId => {
     if (!response.ok) {
       // 404 오류 등이 발생하면 여기서 에러를 발생시킵니다.
       throw new Error(
-        `Failed to fetch match details. Status: ${response.status}`,
+        `⚽️ [Plab] ❌ Failed to fetch match details. Status: ${response.status}`,
       );
     }
     const data = await response.json();

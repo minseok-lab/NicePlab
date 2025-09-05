@@ -14,7 +14,9 @@ import { API_ENDPOINTS, KMA_PAST_TEMPERATURE_API_KEY } from '../constants';
  * @returns {object|null} - 성공 시 { list } 객체, 실패 시 null
  */
 export const fetchPastTemperature = async (stationId = '108') => {
-  console.log(`[과거 기온 API] 관측소 ID '${stationId}'로 조회를 시작합니다.`);
+  console.log(
+    `[과거 기온 API] ➡️ 관측소 ID '${stationId}'로 조회를 시작합니다.`,
+  );
   // 1. 조회할 날짜 범위 계산 (어제부터 10일 전까지)
   const { startDate, endDate } = getPastDateRange(15);
 
@@ -27,7 +29,7 @@ export const fetchPastTemperature = async (stationId = '108') => {
 
   // 3. 결과 반환
   if (!pastData || pastData.length === 0) {
-    console.error('과거 기온 데이터를 가져오는데 실패했습니다.');
+    console.error('[과거 기온 API] ❌ 데이터를 가져오는데 실패했습니다.');
     return null;
   }
 
@@ -79,12 +81,14 @@ async function fetchAsosData(stationId, startDate, endDate) {
     // ✨ 이 라인에서 'const parsedData ='가 누락되지 않았는지 확인해주세요.
     const parsedData = parseAsosData(data.response.body.items.item);
 
-    console.log(`[과거 기온 API] 수신된 데이터 일수: ${parsedData.length}일`);
+    console.log(
+      `[과거 기온 API] ➡️ 수신된 데이터 일수: ${parsedData.length}일`,
+    );
 
     return parsedData;
   } else {
     console.warn(
-      `[과거 기온 API] 데이터 없음. 응답:`,
+      `[과거 기온 API] ❌ 데이터 없음. 응답:`,
       data?.response?.header?.resultMsg,
     );
     return null;

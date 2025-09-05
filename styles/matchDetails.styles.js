@@ -14,7 +14,10 @@ export const getMatchDetailsStyles = theme =>
       borderTopWidth: 1,
       borderTopColor: theme.textMuted,
     },
-
+    // 로딩 인디케이터를 위한 컨테이너 스타일
+    loadingContainer: {
+      marginVertical: 10,
+    },
     // --- TouchableOpacity로 감싸는 개별 매치 아이템 ---
     matchItemContainer: {
       // ⭐ 누락된 스타일 추가
@@ -66,7 +69,10 @@ export const getMatchDetailsStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-
+    // ▼ [추가] 레벨 뱃지 아이콘 스타일
+    badgeIcon: {
+      marginRight: 6,
+    },
     // --- "평균 레벨: 아마추어..." 텍스트 ---
     matchDetailsText: {
       // ⭐ 이름 통일: detailsText -> matchDetailsText

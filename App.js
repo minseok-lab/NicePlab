@@ -64,11 +64,11 @@ function AppContent() {
       style={[styles.container, { paddingBottom: insets.bottom }]}
     >
       <StatusBar barStyle={statusBar} />
-      <Image source={currentLogo} style={styles.logo} resizeMode="contain" />
+      <Image source={currentLogo} style={styles.logo} />
 
       {/* 2) ScrollView로 감싸서 화면이 작을 때도 스크롤 가능하도록 합니다. */}
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollViewContent}
         // ✨ 개선안 1 적용: refreshing prop에 isLoading을, onRefresh prop에 refetch 함수를 직접 전달합니다.
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />

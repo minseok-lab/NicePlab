@@ -12,7 +12,12 @@ export const getLiveCardStyles = theme =>
       borderRadius: 16,
       // 2. 그림자 효과(elevation, shadow) 속성 제거
     },
-
+    // ▼ [추가] 로딩 상태일 때의 컨테이너 스타일을 정의합니다.
+    loadingContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 150,
+    },
     // --- 상단 영역 ---
     // 예보 카드와 동일한 레이아웃을 위해 스타일 이름을 통일합니다.
     header: {
