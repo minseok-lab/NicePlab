@@ -1,8 +1,11 @@
 // components/LiveWeatherCard.js
 
+// 1. Import Sections
+// 1) react
+import React from 'react';
 import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
 
-// --- 스타일 및 유틸리티 ---
+// 2) 스타일 및 유틸리티
 import { useDynamicGradient } from '../hooks';
 import { getLiveCardStyles, PALETTE } from '../styles';
 import {
@@ -10,6 +13,7 @@ import {
   getScoreColor,
   getUvColor,
   getDustColor,
+  getTimePeriod,
 } from '../utils';
 import { NAVER_WEATHER_URL } from '../constants';
 import LoadingIndicator from './LoadingIndicator';
@@ -34,18 +38,19 @@ const LiveWeatherCard = ({ liveData, location, daylightInfo }) => {
     );
   }
 
-  // 날짜/시간 포맷팅 (렌더링 시점에 계산)
-  // ▼ 2. [핵심 로직] 일출/일몰 시간으로 낮/밤을 판단합니다.
+  // isDay 계산 로직을 getTimePeriod 유틸리티로 대체합니다.
   const now = new Date();
-  // daylightInfo가 있고, 현재 시간이 일출 시간보다 크고 일몰 시간보다 작으면 '낮'으로 판단합니다.
-  const isDay = daylightInfo
-    ? now > new Date(daylightInfo.sunrise) &&
-      now < new Date(daylightInfo.sunset)
-    : true; // 정보가 없으면 오류 방지를 위해 기본값으로 '낮'으로 설정합니다.
 
+  const timePeriod = location
+    ? getTimePeriod(now, location.latitude, location.longitude)
+    : 'day';
+
+  // 낮 시간대(아이콘 표시용)를 'day' 또는 'sunrise'로 정의합니다.
+  const isDay = timePeriod === 'day' || timePeriod === 'sunrise';
+
+  // ✨ 변경점: 3. 날짜 포맷팅 로직도 일관성을 위해 useMemo로 감싸줍니다.
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
-
   const formattedDateTime = `${
     now.getMonth() + 1
   }월 ${now.getDate()}일 ${now.toLocaleString('ko-KR', {
@@ -150,4 +155,4 @@ const LiveWeatherCard = ({ liveData, location, daylightInfo }) => {
   );
 };
 
-export default LiveWeatherCard;
+export default React.memo(LiveWeatherCard);

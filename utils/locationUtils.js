@@ -236,7 +236,7 @@ export const getWeatherLocationInfo = async (locationName = '내 위치') => {
   }
 
   // "내 위치" 또는 그 외의 경우, GPS 기반으로 실제 위치를 탐색합니다.
-  console.log('🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다.');
+  console.log('\n 1️⃣ --- 🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다. ---');
   const regionInfo = await getGpsBasedRegionInfo();
 
   // GPS 정보 획득 실패 시, '현재 위치'(안양시) 정보로 대체합니다.

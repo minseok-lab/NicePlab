@@ -6,7 +6,7 @@ import { apiClient } from './apiClient';
 
 // 2) 내부 모듈 (Constants, Utils)
 import { API_ENDPOINTS, KMA_UV_API_KEY } from '../constants';
-import { interpolateUvData } from '../utils';
+import { interpolateUvData } from '../utils/formatters/uvForcastDataParser';
 
 /**
  * 기능: 특정 지역의 자외선 지수 예보를 기상청 API를 통해 가져옵니다.
@@ -34,7 +34,7 @@ export const fetchUvIndexForcast = async (areaNo = '4117300000') => {
   const timeString = `${year}${month}${day}${baseHour}`;
   const uvBaseDate = new Date(`${year}-${month}-${day}T${baseHour}:00:00`);
 
-  // ✨ 변경점: URLSearchParams를 사용하여 URL 생성
+  // URLSearchParams를 사용하여 URL 생성
   const baseUrl = API_ENDPOINTS.KMA_UV;
   const params = new URLSearchParams({
     serviceKey: KMA_UV_API_KEY,
@@ -46,19 +46,19 @@ export const fetchUvIndexForcast = async (areaNo = '4117300000') => {
   });
   const requestUrl = `${baseUrl}?${params.toString()}`;
 
-  console.log(`[자외선 예보 API] ➡️ 요청 시작: Time=${timeString}`);
+  console.log(`😎 [자외선 예보 API] ➡️ 요청 시작: Time=${timeString}`);
   const data = await apiClient(requestUrl, { apiName: '자외선 지수' });
 
   if (data?.response?.body?.items?.item?.[0]) {
     console.log(
-      `[자외선 예보 API] ✅ 요청 성공: ${timeString} 데이터 수신 완료.`,
+      `😎 [자외선 예보 API] ✅ 요청 성공: ${timeString} 데이터 수신 완료.`,
     );
     const uvData = data.response.body.items.item[0];
     const interpolatedData = interpolateUvData(uvData, parseInt(baseHour, 10));
     return { hourlyUv: interpolatedData, uvBaseDate: uvBaseDate };
   } else {
     console.error(
-      '[자외선 예보 API] ❌ 에러: 데이터가 없거나 형식이 올바르지 않습니다.',
+      '😎 [자외선 예보 API] ❌ 에러: 데이터가 없거나 형식이 올바르지 않습니다.',
     );
     return null;
   }

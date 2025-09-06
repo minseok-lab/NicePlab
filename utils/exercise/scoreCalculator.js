@@ -78,7 +78,7 @@ export const getBestExerciseTimes = (weatherList, season) => {
   }
 
   return averagedScoredList
-    .filter(item => item.totalScore >= 10)
+    .filter(item => item.totalScore >= 50)
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 50);
 };

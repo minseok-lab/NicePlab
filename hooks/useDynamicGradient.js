@@ -7,26 +7,11 @@ import SunCalc from 'suncalc';
 
 // 2) styles, utils
 import { PALETTE } from '../styles';
-import { getUserLocationAndAddress } from '../utils';
+import { getUserLocationAndAddress, getTimePeriod } from '../utils';
 
 // 2. Helper Functions
 /**
- * 1) @description 현재 시간을 기준으로 시간대(sunrise, sunset, day, night)를 반환합니다.
- **** @param {object} sunTimes - SunCalc.getTimes()로 계산된 일출/일몰 시간 객체
- **** @returns {string} 현재 시간대 이름
- */
-function getCurrentTimePeriod(sunTimes) {
-  const now = new Date();
-  const { sunrise, sunset, dawn, dusk } = sunTimes;
-
-  if (now >= dawn && now < sunrise) return 'sunrise';
-  if (now >= sunset && now < dusk) return 'sunset';
-  if (now >= sunrise && now < sunset) return 'day';
-  return 'night';
-}
-
-/**
- * 2) @description 다음 시간대 변경까지 남은 시간을 밀리초(ms) 단위로 계산합니다.
+ * 1) @description 다음 시간대 변경까지 남은 시간을 밀리초(ms) 단위로 계산합니다.
  **** @param {object} sunTimes - SunCalc.getTimes()로 계산된 일출/일몰 시간 객체
  **** @returns {number} 다음 이벤트까지 남은 시간 (ms)
  */
@@ -63,7 +48,7 @@ function getMillisecondsUntilNextEvent(sunTimes) {
 }
 
 /**
- * 3) @description 현재 시간대에 따라 동적인 그라데이션과 테마를 제공하는 커스텀 훅
+ * 2) @description 현재 시간대에 따라 동적인 그라데이션과 테마를 제공하는 커스텀 훅
  */
 export function useDynamicGradient() {
   const [timePeriod, setTimePeriod] = useState('day'); // 현재 시간대 (day, night 등)
@@ -72,7 +57,7 @@ export function useDynamicGradient() {
   const updateTheme = useCallback((latitude, longitude) => {
     // 주어진 위치와 현재 시간을 기준으로 테마를 업데이트합니다.
     const sunTimes = SunCalc.getTimes(new Date(), latitude, longitude);
-    const period = getCurrentTimePeriod(sunTimes);
+    const period = getTimePeriod(new Date(), latitude, longitude);
     setTimePeriod(period);
 
     // 다음 업데이트를 위한 sunTimes 정보를 반환합니다.

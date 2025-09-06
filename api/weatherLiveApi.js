@@ -4,7 +4,7 @@
 import { apiClient } from './apiClient';
 
 // 로컬 함수 대신 공용 URL 빌더를 import 합니다.
-import { buildKmaApiUrl } from '../utils';
+import { buildKmaApiUrl } from '../utils/kmaApiUrlBuilder';
 
 /**
  * 기상청 초단기실황 데이터를 가져옵니다.

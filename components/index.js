@@ -8,6 +8,7 @@ import Toast from './Toast';
 import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
+import MatchFilter from './MatchFilter';
 
 // 2. 가져온 컴포넌트들을 named export 방식으로 내보냅니다.
 export {
@@ -18,4 +19,5 @@ export {
   RecommendTimeCard,
   MatchDetails,
   LiveWeatherCard,
+  MatchFilter,
 };

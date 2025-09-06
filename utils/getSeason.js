@@ -60,7 +60,7 @@ export const getSeason = pastData => {
   const season = findCurrentSeason(movingAverages);
 
   // DEBUG: 최종적으로 반환되는 계절을 확인합니다.
-  console.log(`[계절 판단]: ✅ ${season}`);
+  console.log(`[계절 판단] ✅ ${season}`);
 
   return season;
 };

@@ -22,6 +22,7 @@ import RecommendTimeCard from './RecommendTimeCard';
 import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 import LoadingIndicator from './LoadingIndicator';
+import MatchFilter from './MatchFilter';
 
 // --- Main Component ---
 const WeatherInfo = ({
@@ -43,6 +44,9 @@ const WeatherInfo = ({
   const [expandedTimestamp, setExpandedTimestamp] = useState(null);
   const [detailedMatches, setDetailedMatches] = useState({});
   const [loadingTimestamps, setLoadingTimestamps] = useState(new Set());
+  // ✨ 2. 필터 상태를 관리하기 위한 useState 훅을 추가합니다.
+  const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female', 'mixed'
+  const [levelFilter, setLevelFilter] = useState('all'); // 'all', 'amateur2_under', 'amateur4_above', 'general'
 
   // --- Memoized Data Processing ---
   const finalRecommendedSlots = useMemo(() => {
@@ -51,7 +55,27 @@ const WeatherInfo = ({
       return [];
     }
 
-    // [최적화] plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
+    // ✨ 3. Plab 매치 목록을 그룹화하기 전에, 현재 필터 조건에 따라 먼저 필터링합니다.
+    const filteredPlabMatches = plabMatches.filter(match => {
+      const genderMatch =
+        genderFilter === 'all' ||
+        (genderFilter === 'male' && match.sex === 1) ||
+        (genderFilter === 'female' && match.sex === -1) ||
+        (genderFilter === 'mixed' && match.sex === 0);
+
+      const levelMatch =
+        levelFilter === 'all' ||
+        (levelFilter === 'amateur2_under' &&
+          match.display_level === '아마추어2 이하') ||
+        (levelFilter === 'amateur4_above' &&
+          match.display_level === '아마추어4 이상') ||
+        (levelFilter === 'general' && match.display_level === '누구나');
+
+      return genderMatch && levelMatch;
+    });
+
+    // 필터링된 매치 목록을 사용하여 시간대별 Map을 생성합니다.
+    // plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
     // 이렇게 하면 매번 전체 배열을 순회할 필요가 없습니다.
     const matchesByHour = new Map();
     plabMatches.forEach(match => {
@@ -69,11 +93,11 @@ const WeatherInfo = ({
       matchesByHour.get(hourKey).push(match);
     });
 
-    // 3. 날씨 점수 기반 상위 후보 선정 (변경 없음)
+    // 3. 날씨 점수 기반 상위 후보 선정
     const bestWeatherCandidates = getBestExerciseTimes(
       weatherData.list,
       season,
-    ).slice(0, 25);
+    ).slice(0, 50);
 
     const filteredWithMatches = [];
 
@@ -98,7 +122,7 @@ const WeatherInfo = ({
     }
 
     return filteredWithMatches;
-  }, [weatherData, season, plabMatches]);
+  }, [weatherData, season, plabMatches, genderFilter, levelFilter]);
 
   // --- [개선] Event Handlers ---
   const handleToggleCard = useCallback(
@@ -157,6 +181,15 @@ const WeatherInfo = ({
       />
       <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
 
+      {/* MatchFilter 컴포넌트를 렌더링하고, 상태와 핸들러를 props로 전달합니다. */}
+      <MatchFilter
+        genderFilter={genderFilter}
+        onGenderChange={setGenderFilter}
+        levelFilter={levelFilter}
+        onLevelChange={setLevelFilter}
+        theme={theme}
+      />
+
       {finalRecommendedSlots.length > 0 ? (
         finalRecommendedSlots.map(weatherItem => {
           // 💡 [오류 수정] 이제 weatherItem에서 matches를 정상적으로 가져올 수 있습니다.
@@ -193,7 +226,7 @@ const WeatherInfo = ({
         })
       ) : (
         <Text style={globalStyles.noDataText}>
-          추천할 만한 시간대가 없네요.
+          ✅ 선택하신 조건에 맞는 추천 시간대가 없네요!
         </Text>
       )}
 

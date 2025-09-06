@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, Image } from 'react-native';
-import SunCalc from 'suncalc';
 
 import { useDynamicGradient } from '../hooks';
 import { getRecommendTimeCardStyles, PALETTE } from '../styles';
@@ -11,6 +10,7 @@ import {
   getScoreColor,
   getUvColor,
   getDustColor,
+  getTimePeriod,
 } from '../utils';
 
 /**
@@ -47,17 +47,13 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
   }, [date]);
 
   // 4. location 정보가 있을 경우에만 시간대 계산을 수행합니다.
+  // isDay 계산 로직을 새로운 getTimePeriod 유틸리티로 교체합니다.
   const isDay = useMemo(() => {
-    if (location) {
-      const sunTimes = SunCalc.getTimes(
-        date,
-        location.latitude,
-        location.longitude,
-      );
-      // 해가 떠 있는 시간(일출 ~ 일몰)이면 isDay는 true가 됩니다.
-      return date >= sunTimes.sunrise && date < sunTimes.sunset;
-    }
-    return true; // location 정보가 없으면 기본값 true
+    const timePeriod = location
+      ? getTimePeriod(date, location.latitude, location.longitude)
+      : 'day';
+    // 낮 시간대를 'day' 또는 'sunrise'로 정의합니다.
+    return timePeriod === 'day' || timePeriod === 'sunrise';
   }, [date, location]);
 
   // 계산된 isDay 값을 formatWeather에 전달합니다.
@@ -68,7 +64,7 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
 
   const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
 
-  // 3. JSX 반환 (⭐ 스타일 이름 및 구조 수정)
+  // 3. JSX 반환 (스타일 이름 및 구조 수정)
   return (
     <>
       {/* 상단: 날짜와 점수 */}
