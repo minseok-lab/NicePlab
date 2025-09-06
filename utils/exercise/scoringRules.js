@@ -150,18 +150,8 @@ export const scoringRules = {
   pm10: (data, season) => getAirQualityScore(data.pm10Grade),
   pm25: (data, season) => getAirQualityScore(data.pm25Grade),
   daylight: (data, season, daylightInfo) => {
-    // daylightInfo가 아직 준비되지 않았다면(null 또는 undefined),
-    // .sunrise 속성을 읽기 전에 즉시 기본 점수를 반환하여 충돌을 방지합니다.
-    if (!daylightInfo) {
-      return 50; // 기본 점수
-    }
-
-    // daylightInfo가 유효할 때만 getDaylightScore 함수를 호출합니다.
-    return getDaylightScore(
-      data.dt,
-      daylightInfo.sunrise,
-      daylightInfo.sunset,
-      season,
-    );
+    // getDaylightScore 함수는 daylightInfo 객체 전체를 필요로 합니다.
+    // 올바르게 daylightInfo 객체를 전달해줍니다.
+    return getDaylightScore(data.dt, daylightInfo);
   },
 };

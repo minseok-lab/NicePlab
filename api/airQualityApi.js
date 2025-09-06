@@ -36,8 +36,8 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
   });
   const requestUrl = `${baseUrl}?${params.toString()}`;
 
-  console.log(`[미세먼지 예보] ➡️ ${informCode} 미세먼지 데이터 조회 시작`);
-  console.log(`[미세먼지 예보] ➡️ 조회 지역: ${sidoName}`);
+  console.log(`😷 [미세먼지 예보] ➡️ ${informCode} 미세먼지 데이터 조회 시작`);
+  console.log(`😷 [미세먼지 예보] ➡️ 조회 지역: ${sidoName}`);
 
   // ✨ try-catch 블록 대신 apiClient를 사용합니다.
   const data = await apiClient(requestUrl, `미세먼지 ${informCode}`);
@@ -57,17 +57,17 @@ const fetchAndParseGrade = async (informCode, sidoName) => {
 
           if (region === apiRegionName) {
             console.log(
-              `[미세먼지 예보] '${sidoName}' 지역의 예보 등급 ➡️`,
+              `😷 [미세먼지 예보] '${sidoName}' 지역의 예보 등급 ➡️`,
               grade,
             );
-            console.log(`[미세먼지 예보] ✅ ${informCode} 조회 성공`);
+            console.log(`😷 [미세먼지 예보] ✅ ${informCode} 조회 성공`);
             return grade; // 일치하는 지역을 찾으면 바로 등급을 반환
           }
         }
       }
     }
   }
-  console.log(`[미세먼지 예보] ❌ ${informCode} 조회 실패: 데이터 없음`);
+  console.log(`😷 [미세먼지 예보] ❌ ${informCode} 조회 실패: 데이터 없음`);
   return '정보없음';
 };
 
@@ -110,7 +110,7 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
   const requestUrl = `${baseUrl}?${params.toString()}`;
 
   console.log(
-    `[현재 미세먼지] ➡️ 데이터 조회 시작, 조회 측정소: ${stationName}`,
+    `😷 [현재 미세먼지] ➡️ 데이터 조회 시작, 조회 측정소: ${stationName}`,
   );
 
   const data = await apiClient(requestUrl, `현재 미세먼지`);
@@ -128,21 +128,21 @@ export const fetchCurrentAirQuality = async (stationName = '종로구') => {
       latestData.pm25Flag === '통신장애'
     ) {
       console.log(
-        `[현재 미세먼지] ❌ 조회 실패: '${stationName}' 측정소의 데이터가 유효하지 않습니다 (점검 또는 통신장애).`,
+        `😷 [현재 미세먼지] ❌ 조회 실패: '${stationName}' 측정소의 데이터가 유효하지 않습니다 (점검 또는 통신장애).`,
       );
       // ❗️ 실패로 처리하여 다음 측정소를 시도하도록 null 반환
       return null;
     }
 
     // 유효성 검사를 통과한 경우에만 데이터를 반환합니다.
-    console.log(`[현재 미세먼지] ✅ 조회 성공`);
+    console.log(`😷 [현재 미세먼지] ✅ 조회 성공`);
     return {
       pm10Value: latestData.pm10Value,
       pm25Value: latestData.pm25Value,
       dataTime: latestData.dataTime,
     };
   } else {
-    console.log(`[현재 미세먼지] ❌ 조회 실패: 데이터 없음`);
+    console.log(`😷 [현재 미세먼지] ❌ 조회 실패: 데이터 없음`);
     return null;
   }
 };

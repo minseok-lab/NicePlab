@@ -1,8 +1,9 @@
 // components/RecommendTimeCard.js
 
+import React, { useMemo } from 'react';
 import { View, Text, Image } from 'react-native';
 import SunCalc from 'suncalc';
-// 👇 WeatherForcastCard 전용 스타일을 import 합니다.
+
 import { useDynamicGradient } from '../hooks';
 import { getRecommendTimeCardStyles, PALETTE } from '../styles';
 import {
@@ -18,13 +19,12 @@ import {
  * @param {object} weatherItem - 특정 시간대의 모든 날씨 정보가 담긴 객체
  */
 const RecommendTimeCard = ({ weatherItem, location }) => {
-  // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 동적 스타일을 생성합니다.
+  // 1. 훅을 호출하여 현재 테마를 가져오고, 동적 스타일을 생성합니다.
   const { state } = useDynamicGradient();
   const theme = PALETTE.themes[state];
   const styles = getRecommendTimeCardStyles(theme);
-  // ▲
 
-  // 1. 데이터 구조 분해 할당
+  // 2. 데이터 구조 분해 할당
   const {
     dt,
     totalScore,
@@ -37,27 +37,35 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
     pm25Grade,
   } = weatherItem;
 
-  // 2. 데이터 가공
-  const date = new Date(dt * 1000);
-  const dayOfWeek = date.toLocaleString('ko-KR', { weekday: 'short' }); // '월', '화' 등 요일 추출
-  const timeStr = `${
-    date.getMonth() + 1
-  }월 ${date.getDate()}일 ${dayOfWeek}요일 ${date.getHours()}시`; // 요일을 문자열에 추가
-  let isDay = true; // 기본값은 '낮'으로 설정
+  // 3. useMemo를 사용해 props가 변경될 때만 값을 다시 계산합니다.
+  const date = useMemo(() => new Date(dt * 1000), [dt]);
+  const timeStr = useMemo(() => {
+    const dayOfWeek = date.toLocaleString('ko-KR', { weekday: 'short' }); // '월', '화' 등 요일 추출
+    return `${
+      date.getMonth() + 1
+    }월 ${date.getDate()}일 ${dayOfWeek}요일 ${date.getHours()}시`;
+  }, [date]);
 
-  // location 정보가 있을 경우에만 시간대 계산을 수행합니다.
-  if (location) {
-    const sunTimes = SunCalc.getTimes(
-      date,
-      location.latitude,
-      location.longitude,
-    );
-    // 해가 떠 있는 시간(일출 ~ 일몰)이면 isDay는 true가 됩니다.
-    isDay = date >= sunTimes.sunrise && date < sunTimes.sunset;
-  }
+  // 4. location 정보가 있을 경우에만 시간대 계산을 수행합니다.
+  const isDay = useMemo(() => {
+    if (location) {
+      const sunTimes = SunCalc.getTimes(
+        date,
+        location.latitude,
+        location.longitude,
+      );
+      // 해가 떠 있는 시간(일출 ~ 일몰)이면 isDay는 true가 됩니다.
+      return date >= sunTimes.sunrise && date < sunTimes.sunset;
+    }
+    return true; // location 정보가 없으면 기본값 true
+  }, [date, location]);
 
   // 계산된 isDay 값을 formatWeather에 전달합니다.
-  const weather = formatWeather(sky, pty, isDay);
+  const weather = useMemo(
+    () => formatWeather(sky, pty, isDay),
+    [sky, pty, isDay],
+  );
+
   const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
 
   // 3. JSX 반환 (⭐ 스타일 이름 및 구조 수정)
@@ -125,4 +133,6 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
   );
 };
 
-export default RecommendTimeCard;
+// 4. React.memo로 컴포넌트를 감싸줍니다.
+// 이렇게 하면 weatherItem이나 location prop이 변경되지 않는 한, 이 컴포넌트는 리렌더링되지 않습니다.
+export default React.memo(RecommendTimeCard);

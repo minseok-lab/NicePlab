@@ -1,5 +1,6 @@
 // components/MatchDetails.js
 
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 import { getMatchDetailsStyles } from '../styles';
@@ -13,7 +14,7 @@ import SvgIcTshirt from './IcTshirt';
 import LoadingIndicator from './LoadingIndicator';
 
 // --- Helper Functions ---
-// ✨ FIX: 함수가 문자열 대신 순수한 숫자 또는 null을 반환하도록 수정
+// 함수가 문자열 대신 순수한 숫자 또는 null을 반환하도록 수정
 const getAverageLevelInfo = match => {
   if (
     match.confirm_cnt === 0 ||
@@ -47,6 +48,82 @@ const getAverageLevelInfo = match => {
   return levelStats.sum / levelStats.count;
 };
 
+// ✨ 2. 단일 매치 아이템을 렌더링하는 최적화된 컴포넌트 생성
+const MatchItem = React.memo(({ match, theme }) => {
+  const styles = getMatchDetailsStyles(theme);
+
+  // useMemo를 사용하여 복잡한 계산 결과를 메모이제이션합니다.
+  const { tierInfo, badgeUrl } = useMemo(() => {
+    const averageLevel = getAverageLevelInfo(match);
+    const tier = getTierFromLevel(averageLevel) || {
+      name: '정보 없음',
+      en_name: '',
+    };
+    const url = getLevelBadgeUrl(tier.en_name);
+    return { tierInfo: tier, badgeUrl: url };
+  }, [match]);
+
+  // useCallback을 사용하여 onPress 핸들러가 재생성되는 것을 방지합니다.
+  const handlePress = useCallback(() => {
+    const url = `https://www.plabfootball.com/match/${match.id}/`;
+    // Linking.openURL에 .catch()를 추가하여 오류를 처리합니다.
+    Linking.openURL(url).catch(err => console.error('URL 열기 실패:', err));
+  }, [match.id]);
+
+  return (
+    <TouchableOpacity style={styles.matchItemContainer} onPress={handlePress}>
+      <View style={styles.titleContainer}>
+        <Text style={[styles.matchInfoText, styles.matchLink]}>
+          {`⚽  ${match.label_title}`}
+        </Text>
+
+        {typeof match.is_earlybird === 'number' && (
+          <SvgUri
+            width="18"
+            height="18"
+            uri={PLAB_EARLY_Bird}
+            style={[styles.baseIconStyle, styles.earlybirdIconStyle]}
+          />
+        )}
+        {Boolean(match.is_super_sub) && (
+          <SvgUri
+            width="18"
+            height="18"
+            uri={PLAB_SUPER_SUB}
+            style={[styles.baseIconStyle, styles.earlybirdIconStyle]}
+          />
+        )}
+        {match.type === 'tshirt' && (
+          <SvgIcTshirt
+            width="30"
+            height="30"
+            color={theme.iconColor} // 예: theme 객체에 정의된 텍스트 색상
+            style={[styles.baseIconStyle, styles.tshirtIconStyle]}
+          />
+        )}
+      </View>
+
+      <View style={styles.matchDetailsContainer}>
+        {badgeUrl ? (
+          <SvgUri
+            width="18"
+            height="18"
+            uri={badgeUrl}
+            style={styles.badgeIcon}
+          />
+        ) : (
+          <Text style={styles.badgeIcon}>📊</Text>
+        )}
+        {/* 안전하게 레벨 정보를 화면에 표시합니다. */}
+        <Text style={styles.matchDetailsText}>
+          {`평균 레벨: ${tierInfo.name} `}
+          {`[ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
 const MatchDetails = ({ isLoading, matches, theme }) => {
   const styles = getMatchDetailsStyles(theme);
 
@@ -70,76 +147,10 @@ const MatchDetails = ({ isLoading, matches, theme }) => {
 
   return (
     <View style={styles.matchListContainer}>
-      {matches.map(match => {
-        // 1. averageLevel은 이제 숫자 또는 null 입니다.
-        const averageLevel = getAverageLevelInfo(match);
-
-        // ✨ FIX: tierInfo가 없는 경우를 대비해 안전한 기본값을 설정합니다.
-        const tierInfo = getTierFromLevel(averageLevel) || {
-          name: '정보 없음',
-          en_name: '',
-        };
-        const badgeUrl = getLevelBadgeUrl(tierInfo.en_name);
-
-        return (
-          <TouchableOpacity
-            key={match.id}
-            style={styles.matchItemContainer}
-            onPress={() =>
-              Linking.openURL(`https://www.plabfootball.com/match/${match.id}/`)
-            }
-          >
-            <View style={styles.titleContainer}>
-              <Text style={[styles.matchInfoText, styles.matchLink]}>
-                {`⚽  ${match.label_title}`}
-              </Text>
-
-              {typeof match.is_earlybird === 'number' && (
-                <SvgUri
-                  width="18"
-                  height="18"
-                  uri={PLAB_EARLY_Bird}
-                  style={[styles.baseIconStyle, styles.earlybirdIconStyle]}
-                />
-              )}
-              {Boolean(match.is_super_sub) && (
-                <SvgUri
-                  width="18"
-                  height="18"
-                  uri={PLAB_SUPER_SUB}
-                  style={[styles.baseIconStyle, styles.earlybirdIconStyle]}
-                />
-              )}
-              {match.type === 'tshirt' && (
-                <SvgIcTshirt
-                  width="30"
-                  height="30"
-                  color={theme.iconColor} // 예: theme 객체에 정의된 텍스트 색상
-                  style={[styles.baseIconStyle, styles.tshirtIconStyle]}
-                />
-              )}
-            </View>
-
-            <View style={styles.matchDetailsContainer}>
-              {badgeUrl ? (
-                <SvgUri
-                  width="18"
-                  height="18"
-                  uri={badgeUrl}
-                  style={styles.badgeIcon}
-                />
-              ) : (
-                <Text style={styles.badgeIcon}>📊</Text>
-              )}
-              {/* ✨ FIX: 안전하게 레벨 정보를 화면에 표시합니다. */}
-              <Text style={styles.matchDetailsText}>
-                {`평균 레벨: ${tierInfo.name} `}
-                {`[ ${match.confirm_cnt} / ${match.max_player_cnt} ]`}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        );
-      })}
+      {matches.map(match => (
+        // 3. matches.map 안에서는 최적화된 MatchItem 컴포넌트를 렌더링합니다.
+        <MatchItem key={match.id} match={match} theme={theme} />
+      ))}
     </View>
   );
 };

@@ -45,16 +45,14 @@ function AppContent() {
     clearToast,
   } = useWeather();
   const { colors, statusBar, state } = useDynamicGradient();
-  // ▼ 2. 훅으로 가져온 state를 기반으로 테마와 스타일을 동적으로 생성합니다.
+  // 2. 훅으로 가져온 state를 기반으로 테마와 스타일을 동적으로 생성합니다.
   const theme = PALETTE.themes[state];
   const styles = getGlobalStyles(theme);
-  // ▲
   const currentLogo = state === 'night' ? LogoWhite : LogoBlack;
 
-  // ✨ 개선안 1: 'refreshing' 상태와 'onRefresh' 함수를 제거합니다.
+  // 'refreshing' 상태와 'onRefresh' 함수를 제거합니다.
   // isLoading과 refetch를 RefreshControl에서 직접 사용해 상태 관리를 통합합니다.
-
-  // ✨ 개선안 2: 'renderContent' 헬퍼 함수를 제거하고 JSX 내부에 직접 조건부 렌더링을 구현합니다.
+  // 'renderContent' 헬퍼 함수를 제거하고 JSX 내부에 직접 조건부 렌더링을 구현합니다.
 
   // --- 3. 화면에 보여줄 UI(사용자 인터페이스)를 렌더링하는 부분 ---
   return (
@@ -69,20 +67,20 @@ function AppContent() {
       {/* 2) ScrollView로 감싸서 화면이 작을 때도 스크롤 가능하도록 합니다. */}
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
-        // ✨ 개선안 1 적용: refreshing prop에 isLoading을, onRefresh prop에 refetch 함수를 직접 전달합니다.
+        // refreshing prop에 isLoading을, onRefresh prop에 refetch 함수를 직접 전달합니다.
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
       >
-        {/* ✨ 개선안 2 적용: JSX 내부에서 직접 조건부 렌더링을 수행합니다. */}
-        {isLoading && !weatherData && !liveData ? ( // [변경] 로딩 조건 구체화
+        {/* JSX 내부에서 직접 조건부 렌더링을 수행합니다. */}
+        {isLoading && !weatherData && !liveData ? ( // 로딩 조건 구체화
           <LoadingIndicator />
         ) : errorMsg ? (
           <ErrorMessage message={errorMsg} />
         ) : weatherData ? (
           <WeatherInfo
             weatherData={weatherData}
-            liveData={liveData} // [추가] liveData를 prop으로 전달
+            liveData={liveData} // liveData를 prop으로 전달
             plabMatches={plabMatches}
             plabLink={PLAB_FOOTBALL_URL}
             lastUpdateTime={lastUpdateTime}

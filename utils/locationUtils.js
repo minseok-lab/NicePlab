@@ -10,7 +10,6 @@ import { AIR_KOREA_STATIONS } from '../constants/airKoreaStations';
 // --- 2. 좌표 변환 및 지역 코드 검색 함수들 (기존 코드와 동일) ---
 
 function convertGpsToGrid(lat, lon) {
-  // ... (기존 convertGpsToGrid 함수 내용 그대로)
   const RE = 6371.00877;
   const GRID = 5.0;
   const SLAT1 = 30.0;
@@ -50,7 +49,6 @@ function convertGpsToGrid(lat, lon) {
 }
 
 function findClosestAreaCode(grid) {
-  // ... (기존 findClosestAreaCode 함수 내용 그대로)
   let closestArea = null;
   let minDistance = Infinity;
 
@@ -72,7 +70,6 @@ function findClosestAreaCode(grid) {
 // --- 3. 위치 정보 처리 함수들 (기존 코드와 동일) ---
 
 export async function getUserLocationAndAddress() {
-  // ... (기존 getUserLocationAndAddress 함수 내용 그대로)
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') {
     throw new Error('Permission to access location was denied.');
@@ -89,7 +86,6 @@ export async function getUserLocationAndAddress() {
 }
 
 function getKmaAreaInfo(coords) {
-  // ... (기존 getKmaAreaInfo 함수 내용 그대로)
   const grid = convertGpsToGrid(coords.latitude, coords.longitude);
   const areaNo = findClosestAreaCode(grid);
   return { grid, areaNo };
@@ -98,7 +94,7 @@ function getKmaAreaInfo(coords) {
 function findPlabRegionInfo(address) {
   const { region, city, district } = address;
 
-  // 👇 [수정] city를 district보다 우선적으로 사용하도록 순서를 변경합니다.
+  // city를 district보다 우선적으로 사용하도록 순서를 설정합니다.
   const currentCity = city || district;
 
   if (!region || !currentCity) {
@@ -149,7 +145,7 @@ function findPlabRegionInfo(address) {
   };
 }
 
-// ⭐ 1) 위경도 기반으로 가장 가까운 ASOS 관측소 ID를 찾는 함수
+// 1) 위경도 기반으로 가장 가까운 ASOS 관측소 ID를 찾는 함수
 function findClosestKMAStationId({ latitude, longitude }) {
   let closestStation = null;
   let minDistance = Infinity;
@@ -168,7 +164,7 @@ function findClosestKMAStationId({ latitude, longitude }) {
 }
 
 /**
- * ⭐ (수정) 위경도 기반으로 가까운 순서대로 '대기질 측정소 목록'을 반환하는 함수
+ * 위경도 기반으로 가까운 순서대로 '대기질 측정소 목록'을 반환하는 함수
  * @param {object} coords - { latitude, longitude }
  * @returns {Array} - 가까운 순으로 정렬된 측정소 객체 배열
  */
@@ -188,7 +184,7 @@ function getStationsSortedByDistance({ latitude, longitude }) {
   return stationsWithDistance;
 }
 
-// ⭐ 2) GPS 기반 정보 조회 함수 수정 (stationName 추가)
+// 2) GPS 기반 정보 조회 함수 수정 (stationName 추가)
 async function getGpsBasedRegionInfo() {
   try {
     const { coords, address } = await getUserLocationAndAddress();
@@ -199,10 +195,10 @@ async function getGpsBasedRegionInfo() {
     const kmaInfo = getKmaAreaInfo(coords);
     const stationId = findClosestKMAStationId(coords);
 
-    // 👇 [추가] 새로 만든 함수를 호출합니다.
+    // 새로 만든 함수를 호출합니다.
     const stationList = getStationsSortedByDistance(coords);
 
-    // 👇 [수정] 최종 반환 객체에 stationName을 포함시킵니다.
+    // 최종 반환 객체에 stationName을 포함시킵니다.
     return { coords, ...plabInfo, ...kmaInfo, stationId, stationList };
   } catch (error) {
     console.error('Failed to get GPS-based region information:', error.message);
@@ -210,7 +206,7 @@ async function getGpsBasedRegionInfo() {
   }
 }
 
-// ⭐ 3) '현재 위치'(안양시) 정보 함수 수정 (stationId 추가)
+// 3) '현재 위치'(안양시) 정보 함수
 function getCurrentLocationInfo() {
   return {
     regionId: 2,

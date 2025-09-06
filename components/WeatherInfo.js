@@ -1,7 +1,7 @@
 // components/WeatherInfo.js
 
-// --- 1. Import Section (변경 없음) ---
-import { useState, useMemo } from 'react';
+// --- 1. Import Section ---
+import { useState, useMemo, useCallback } from 'react';
 import {
   ScrollView,
   View,
@@ -38,21 +38,20 @@ const WeatherInfo = ({
   const theme = PALETTE.themes[state];
   const globalStyles = getGlobalStyles(theme);
   const forcastCardStyles = getRecommendTimeCardStyles(theme);
-  // ▲
 
-  // --- State (변경 없음) ---
+  // --- State ---
   const [expandedTimestamp, setExpandedTimestamp] = useState(null);
   const [detailedMatches, setDetailedMatches] = useState({});
   const [loadingTimestamps, setLoadingTimestamps] = useState(new Set());
 
-  // --- 💡 [개선] Memoized Data Processing ---
+  // --- Memoized Data Processing ---
   const finalRecommendedSlots = useMemo(() => {
-    // 1. 데이터가 준비되지 않았다면 즉시 빈 배열 반환 (변경 없음)
+    // 1. 데이터가 준비되지 않았다면 즉시 빈 배열 반환
     if (!weatherData?.list || !season || !plabMatches) {
       return [];
     }
 
-    // 💡 2. [최적화] plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
+    // [최적화] plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
     // 이렇게 하면 매번 전체 배열을 순회할 필요가 없습니다.
     const matchesByHour = new Map();
     plabMatches.forEach(match => {
@@ -83,16 +82,16 @@ const WeatherInfo = ({
       const slotStartTime = new Date(weatherItem.dt * 1000);
       const hourKey = slotStartTime.toISOString();
 
-      // 💡 5. [최적화] Map에서 O(1) 시간 복잡도로 해당 시간대의 매치를 즉시 조회합니다.
+      // 5. [최적화] Map에서 O(1) 시간 복잡도로 해당 시간대의 매치를 즉시 조회합니다.
       if (matchesByHour.has(hourKey)) {
-        // 💡 6. [로직 개선] 매치가 있다면, 날씨 정보에 매치 목록을 포함시켜 최종 목록에 추가합니다.
+        // 6. [로직 개선] 매치가 있다면, 날씨 정보에 매치 목록을 포함시켜 최종 목록에 추가합니다.
         filteredWithMatches.push({
           ...weatherItem,
-          matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함!
+          matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함
         });
       }
 
-      // 7. 최종 목록이 10개가 채워지면 종료 (변경 없음)
+      // 7. 최종 목록이 10개가 채워지면 종료
       if (filteredWithMatches.length === 10) {
         break;
       }
@@ -101,44 +100,47 @@ const WeatherInfo = ({
     return filteredWithMatches;
   }, [weatherData, season, plabMatches]);
 
-  // --- 💡 [개선] Event Handlers ---
-  const handleToggleCard = async (timestamp, matchesToFetch) => {
-    if (expandedTimestamp === timestamp) {
-      setExpandedTimestamp(null);
-      return;
-    }
-    setExpandedTimestamp(timestamp);
+  // --- [개선] Event Handlers ---
+  const handleToggleCard = useCallback(
+    async (timestamp, matchesToFetch) => {
+      if (expandedTimestamp === timestamp) {
+        setExpandedTimestamp(null);
+        return;
+      }
+      setExpandedTimestamp(timestamp);
 
-    // 💡 [로직 개선] 더 이상 plabMatches를 필터링할 필요 없이,
-    // 클릭된 항목에 포함된 matchesToFetch를 바로 사용합니다.
-    if (
-      detailedMatches[timestamp] ||
-      !matchesToFetch ||
-      matchesToFetch.length === 0
-    ) {
-      return;
-    }
+      // [로직 개선] 더 이상 plabMatches를 필터링할 필요 없이,
+      // 클릭된 항목에 포함된 matchesToFetch를 바로 사용합니다.
+      if (
+        detailedMatches[timestamp] ||
+        !matchesToFetch ||
+        matchesToFetch.length === 0
+      ) {
+        return;
+      }
 
-    setLoadingTimestamps(prev => new Set(prev).add(timestamp));
-    try {
-      const detailPromises = matchesToFetch.map(match =>
-        fetchPlabMatchDetails(match.id),
-      );
-      const results = await Promise.all(detailPromises);
-      setDetailedMatches(prev => ({
-        ...prev,
-        [timestamp]: results.filter(Boolean),
-      }));
-    } catch (error) {
-      console.error('Failed to fetch match details:', error);
-    } finally {
-      setLoadingTimestamps(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(timestamp);
-        return newSet;
-      });
-    }
-  };
+      setLoadingTimestamps(prev => new Set(prev).add(timestamp));
+      try {
+        const detailPromises = matchesToFetch.map(match =>
+          fetchPlabMatchDetails(match.id),
+        );
+        const results = await Promise.all(detailPromises);
+        setDetailedMatches(prev => ({
+          ...prev,
+          [timestamp]: results.filter(Boolean),
+        }));
+      } catch (error) {
+        console.error('Failed to fetch match details:', error);
+      } finally {
+        setLoadingTimestamps(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(timestamp);
+          return newSet;
+        });
+      }
+    },
+    [expandedTimestamp, detailedMatches],
+  );
 
   // location을 기다리는 동안 로딩 화면을 보여줍니다.
   if (!location) {
