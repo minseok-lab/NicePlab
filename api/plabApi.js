@@ -7,31 +7,38 @@ import { apiClient } from './apiClient';
 // 2) 내부 모듈 (contsants)
 import { PLAB_API_URL, PLAB_DETAIL_API_URL } from '../constants';
 
+/**
+ * 특정 날짜와 지역 ID에 해당하는 모든 Plab 매치 페이지를 순회하며 가져옵니다.
+ * @param {string} dateString - 'YYYY-MM-DD' 형식의 날짜 문자열
+ * @param {number} regionId - Plab 지역 ID
+ * @returns {Promise<Array>} 해당 날짜의 모든 매치 목록
+ */
 async function fetchAllPagesForDate(dateString, regionId) {
-  // ... (이 함수는 변경 없음) ...
   let requestUrl = `${PLAB_API_URL}?ordering=schedule&sch=${dateString}&region=${regionId}&page_size=100`;
   let matchesForDate = [];
   let pageCount = 1; // ✨ 페이지 카운터 추가
 
   while (requestUrl) {
-    // ✨ apiClient가 fetch와 기본 에러 처리를 담당합니다.
+    // apiClient가 fetch와 기본 에러 처리를 담당합니다.
     const data = await apiClient(requestUrl, '플랩 매치 목록');
 
     // 데이터 로드에 실패하면 루프를 중단합니다.
-    if (!data) {
+    if (!data.results) {
+      // data와 data.results의 존재 여부를 모두 확인
       console.warn(
-        `⚽️ [Plab] Warning: ${dateString} 날짜의 페이지 ${pageCount}를 가져오지 못했습니다.`,
+        `⚽️ [Plab] Warning: ${dateString} 날짜의 페이지 ${pageCount}를 가져오지 못했거나 결과가 없습니다.`,
       );
       break;
     }
 
-    matchesForDate = matchesForDate.concat(data.results);
-    const nextUrl = data.next;
+    // .push()와 전개 연산자를 사용해 메모리 효율성 개선
+    matchesForDate.push(...data.results);
+    const { next: nextUrl } = data;
 
-    // 다음 페이지 URL이 현재 URL과 동일하면 루프를 강제로 중단합니다.
+    // 다음 페이지 URL이 현재 URL과 동일하면 루프를 강제로 중단하여 무한 루프를 방지합니다.
     if (nextUrl === requestUrl) {
       console.warn(
-        `[무한 루프 방지] 다음 페이지 URL이 현재 URL과 동일하여 중단합니다: ${requestUrl}`,
+        `⚽️ [Plab] 다음 페이지 URL이 현재 URL과 동일하여 중단합니다: ${requestUrl}`,
       );
       break;
     }
@@ -42,35 +49,42 @@ async function fetchAllPagesForDate(dateString, regionId) {
   return matchesForDate;
 }
 
-// *** 수정된 부분: city 대신 cities 배열을 받습니다. ***
+/**
+ * 날씨 예보 목록을 기반으로 추천 Plab 매치 목록을 가져옵니다.
+ * @param {Array} weatherList - 날씨 예보 데이터 배열
+ * @param {number} regionId - Plab 지역 ID
+ * @param {Array<string>} cities - 필터링할 도시/지역 이름 배열
+ * @returns {Promise<Array>} 필터링 및 포맷팅된 최종 매치 목록
+ */
 export const fetchPlabMatches = async (weatherList, regionId, cities) => {
   console.log(
     `⚽️ [Plab] 요청 지역: regionId=${regionId}, cities=${cities.join(', ')}`,
   );
   if (!weatherList || weatherList.length === 0) return [];
 
+  // 1. 날씨 예보에서 중복되지 않는 날짜 목록을 추출합니다.
   const uniqueDates = [
     ...new Set(
-      weatherList.map(item => {
-        const date = new Date(item.dt * 1000);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }),
+      weatherList.map(
+        item => new Date(item.dt * 1000).toISOString().split('T')[0],
+      ),
     ),
   ];
 
   try {
+    // 2. 각 날짜에 대해 모든 페이지의 매치 데이터를 병렬로 가져옵니다.
     const promises = uniqueDates.map(dateString =>
-      fetchAllPagesForDate(dateString, regionId, cities),
+      fetchAllPagesForDate(dateString, regionId),
     );
     const resultsByDate = await Promise.all(promises);
     console.log(
       '⚽️ [Plab] 모든 날짜의 페이지 로딩 완료. 데이터 필터링을 시작합니다.',
     );
+
+    // 3. 모든 날짜의 결과를 하나의 배열로 합칩니다.
     const allMatches = resultsByDate.flat();
 
+    // 4. 지역, 신청 상태에 따라 필터링하고 필요한 형태로 가공합니다.
     const formattedAndFiltered = allMatches
       .filter(match => {
         const isCityMatch = cities.includes(match.area_name);
@@ -78,7 +92,6 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
         const isStatusMatch = ['available', 'hurry'].includes(
           match.apply_status,
         );
-
         return isCityMatch && isStatusMatch;
       })
       .map(match => {
@@ -88,11 +101,8 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
         const minutes = String(startTime.getMinutes()).padStart(2, '0');
 
         return {
-          ...match,
+          ...match, // 매치 객체 정보에 얼리버드, 슈퍼서브, 티셔츠 여부 포함
           formatted_time: `${hours}:${minutes}`,
-          is_earlybird: match.is_earlybird, // 얼리버드 여부
-          is_super_sub: match.is_super_sub, // 슈퍼서브 여부
-          type: match.type,
         };
       });
     console.log(
@@ -100,7 +110,7 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
     );
     return formattedAndFiltered;
   } catch (error) {
-    console.error('Failed to fetch plab matches:', error);
+    console.error('⚽️ [Plab] 매치를 가져오는 데 실패했습니다:', error);
     return [];
   }
 };
@@ -113,17 +123,9 @@ export const fetchPlabMatches = async (weatherList, regionId, cities) => {
 export const fetchPlabMatchDetails = async matchId => {
   const requestUrl = `${PLAB_DETAIL_API_URL}${matchId}/`;
 
-  try {
-    const response = await fetch(requestUrl);
-    if (!response.ok) {
-      // 404 오류 등이 발생하면 여기서 에러를 발생시킵니다.
-      throw new Error(
-        `⚽️ [Plab] ❌ Failed to fetch match details. Status: ${response.status}`,
-      );
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    return null;
-  }
+  // 일관성을 위해 apiClient를 사용합니다.
+  const data = await apiClient(requestUrl, { apiName: '플랩 매치 상세' });
+
+  // apiClient가 에러 처리를 하고 실패 시 null을 반환하므로, 그대로 data를 반환합니다.
+  return data;
 };

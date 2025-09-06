@@ -16,7 +16,6 @@ import {
   fetchKmaLiveWeather, // 기상청 초단기실황조회
   fetchCurrentSkyCondition, // 기상청 초단기예보조회
   fetchCurrentAirQuality, // 실시간 대기질
-  fetchCurrentUvIndex, // 실시간 자외선 지수 API
 } from '../api';
 
 // Utils 함수들을 가져옵니다.
@@ -26,6 +25,7 @@ import {
   getSeason,
   getDustGradeFromValue,
   getScoreDetailsForHour,
+  getCurrentUvFromForecast,
 } from '../utils';
 import { seasonScoreCriteria } from '../configs/exerciseScoreCriteria';
 
@@ -243,7 +243,6 @@ const fetchAllRemoteData = async locationInfo => {
     fetchAirQualityForcast(locationInfo.airQualityRegion), // 대기질 예보
     fetchKmaLiveWeather(locationInfo.grid), // 실시간 날씨
     fetchCurrentSkyCondition(locationInfo.grid), // 실시간 하늘 상태
-    fetchCurrentUvIndex(locationInfo.areaNo), // 실시간 자외선
     fetchLiveAirQualityWithFallback(locationInfo.stationList), // 실시간 대기질
   ]);
 
@@ -255,7 +254,6 @@ const fetchAllRemoteData = async locationInfo => {
     airForcast,
     liveWeather,
     currentSky,
-    currentUv,
     currentAir,
   ] = results.map(res => (res.status === 'fulfilled' ? res.value : null));
 
@@ -266,7 +264,6 @@ const fetchAllRemoteData = async locationInfo => {
     airForcast,
     liveWeather,
     currentSky,
-    currentUv,
     currentAir,
   };
 };
@@ -286,14 +283,16 @@ const processAndCombineData = (apiResults, locationInfo, cachedData) => {
     airForcast,
     liveWeather,
     currentSky,
-    currentUv,
     currentAir,
   } = apiResults;
 
-  // (1) 계절 판단
+  // (1) API 호출 대신, 가져온 예보 데이터로 현재 UV 지수를 직접 계산합니다.
+  const currentUv = getCurrentUvFromForecast(uvForcast);
+
+  // (2) 계절 판단
   const currentSeason = getSeason(pastTemp);
 
-  // (2) 예보 데이터 조합 (API 실패 시 캐시 데이터 사용)
+  // (3) 예보 데이터 조합 (API 실패 시 캐시 데이터 사용)
   const weatherResult = forecast || cachedData.weather;
   const mergedList = mergeForecastData(weatherResult, uvForcast, airForcast);
   const finalWeatherData = {
@@ -302,7 +301,7 @@ const processAndCombineData = (apiResults, locationInfo, cachedData) => {
     list: mergedList,
   };
 
-  // (3) 실시간 데이터 조합
+  // (4) 실시간 데이터 조합
   let finalLiveData = null;
   const liveWeatherResult = liveWeather || cachedData.live;
   if (liveWeatherResult) {
@@ -312,6 +311,7 @@ const processAndCombineData = (apiResults, locationInfo, cachedData) => {
       sky: currentSky,
       pm10Grade: getDustGradeFromValue('pm10', currentAir?.pm10Value),
       pm25Grade: getDustGradeFromValue('pm25', currentAir?.pm25Value),
+      // 로컬에서 계산된 currentUv 값을 사용합니다.
       uvIndex: currentUv ?? '정보없음',
     };
     const weights = seasonScoreCriteria[currentSeason];

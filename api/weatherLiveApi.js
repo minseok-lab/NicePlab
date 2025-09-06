@@ -1,21 +1,26 @@
 // api/weatherLiveApi.js
 
+// api 호출 경로를 불러옵니다.
 import { apiClient } from './apiClient';
-import { API_ENDPOINTS, KMA_LIVE_WEATHER_API_KEY } from '../constants';
+
+// 로컬 함수 대신 공용 URL 빌더를 import 합니다.
+import { buildKmaApiUrl } from '../utils';
 
 /**
  * 기상청 초단기실황 데이터를 가져옵니다.
  * @param {object} grid - {nx, ny} 좌표
- * @returns {object|null} - 성공 시 가공된 현재 날씨 객체, 실패 시 null
+ * @returns {Promise<object|null>} - 성공 시 가공된 현재 날씨 객체, 실패 시 null
  */
 export const fetchKmaLiveWeather = async grid => {
   const { baseDate, baseTime } = getApiBaseDateTimeForLive();
-  const requestUrl = `${API_ENDPOINTS.KMA_LIVE_WEATHER}?serviceKey=${KMA_LIVE_WEATHER_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}`;
+
+  // ✨ 변경점: 중앙화된 헬퍼 함수를 사용하여 URL을 생성합니다.
+  const requestUrl = buildKmaApiUrl('LIVE', { grid, baseDate, baseTime });
 
   console.log(
     `[실황 날씨 API] ➡️ 요청 시작: BaseDate=${baseDate}, BaseTime=${baseTime}`,
   );
-  const data = await apiClient(requestUrl, '기상청 초단기실황');
+  const data = await apiClient(requestUrl, { apiName: '기상청 초단기실황' });
 
   if (data?.response?.body?.items?.item) {
     console.log(

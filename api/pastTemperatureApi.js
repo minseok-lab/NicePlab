@@ -67,24 +67,37 @@ function getPastDateRange(daysAgo) {
 
 /**
  * 특정 기간의 ASOS 데이터를 API로 호출하고 파싱합니다.
+ * URLSearchParams를 사용하여 URL 생성 로직을 개선했습니다.
  * @param {string} stationId - 관측소 지점 ID
  * @param {string} startDate - 조회 시작일 (YYYYMMDD)
  * @param {string} endDate - 조회 종료일 (YYYYMMDD)
  * @returns {Promise<Array|null>} 파싱된 데이터 배열 또는 실패 시 null
  */
 async function fetchAsosData(stationId, startDate, endDate) {
-  const requestUrl = `${API_ENDPOINTS.KMA_ASOS_DAILY}?serviceKey=${KMA_PAST_TEMPERATURE_API_KEY}&pageNo=1&numOfRows=10&dataType=JSON&dataCd=ASOS&dateCd=DAY&startDt=${startDate}&endDt=${endDate}&stnIds=${stationId}`;
+  const baseUrl = API_ENDPOINTS.KMA_ASOS_DAILY;
 
-  const data = await apiClient(requestUrl, '기상청 ASOS 일자료');
+  // 파라미터를 객체로 관리하여 가독성과 유지보수성을 높입니다.
+  const params = new URLSearchParams({
+    serviceKey: KMA_PAST_TEMPERATURE_API_KEY,
+    pageNo: '1',
+    numOfRows: '15', // 15일치 데이터를 요청
+    dataType: 'JSON',
+    dataCd: 'ASOS',
+    dateCd: 'DAY',
+    startDt: startDate,
+    endDt: endDate,
+    stnIds: stationId,
+  });
+
+  const requestUrl = `${baseUrl}?${params.toString()}`;
+
+  const data = await apiClient(requestUrl, { apiName: '기상청 ASOS 일자료' });
 
   if (data?.response?.body?.items?.item) {
-    // ✨ 이 라인에서 'const parsedData ='가 누락되지 않았는지 확인해주세요.
     const parsedData = parseAsosData(data.response.body.items.item);
-
     console.log(
       `[과거 기온 API] ➡️ 수신된 데이터 일수: ${parsedData.length}일`,
     );
-
     return parsedData;
   } else {
     console.warn(
