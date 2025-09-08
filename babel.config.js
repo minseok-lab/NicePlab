@@ -11,5 +11,6 @@ module.exports = function(api) {
     // 'babel-preset-expo'는 Expo 프로젝트에 필요한 모든 Babel 규칙들(JSX, 최신 자바스크립트 문법 등)을
     // 한 번에 적용해주는 매우 편리한 설정입니다.
     presets: ['babel-preset-expo'],
+    plugins: ['react-native-worklets/plugin' ],
   };
 };
