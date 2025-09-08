@@ -19,6 +19,8 @@ export const getGlobalStyles = theme =>
     // ScrollView의 contentContainerStyle에 적용할 스타일을 추가합니다.
     scrollViewContent: {
       flexGrow: 1,
+      paddingBottom: 40,
+      overflow: 'visible',
     },
     subHeader: {
       fontSize: 20,
@@ -46,7 +48,7 @@ export const getGlobalStyles = theme =>
       marginHorizontal: 20,
     },
     footerContainer: {
-      marginBottom: 0,
+      marginBottom: 4,
       marginHorizontal: 20,
     },
     footerText: {

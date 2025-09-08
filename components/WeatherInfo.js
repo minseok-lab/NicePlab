@@ -9,6 +9,7 @@ import {
   Button,
   Linking,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { fetchPlabMatchDetails } from '../api';
 import { getBestExerciseTimes } from '../utils';
@@ -23,6 +24,24 @@ import MatchDetails from './MatchDetails';
 import LiveWeatherCard from './LiveWeatherCard';
 import LoadingIndicator from './LoadingIndicator';
 import MatchFilter from './MatchFilter';
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    zIndex: 100,
+  },
+  cardWrapperVisible: {
+    zIndex: 1,
+  },
+  cardWrapperHidden: {
+    zIndex: -1,
+  },
+  emptyContainerVisible: {
+    zIndex: 1,
+  },
+  emptyContainerHidden: {
+    zIndex: -1,
+  },
+});
 
 // --- Main Component ---
 const WeatherInfo = ({
@@ -178,19 +197,19 @@ const WeatherInfo = ({
   }
 
   // --- Render ---
-  // ✨ 변경점: 2. ScrollView 대신 FlatList를 사용합니다.
+  // ScrollView 대신 FlatList를 사용합니다.
   return (
     <FlatList
       // data prop에는 반복적으로 렌더링할 목록(추천 시간대)을 전달합니다.
       data={finalRecommendedSlots}
       // keyExtractor는 각 아이템의 고유 키를 지정합니다.
       keyExtractor={item => item.dt.toString()}
-      // ✨ 변경점: 2. '당겨서 새로고침' 기능을 FlatList에 직접 연결합니다.
+      // '당겨서 새로고침' 기능을 FlatList에 직접 연결합니다.
       onRefresh={onRefresh}
       refreshing={isRefreshing}
       // ListHeaderComponent는 목록의 최상단에 한 번만 렌더링될 컴포넌트를 지정합니다.
       ListHeaderComponent={
-        <View style={{ zIndex: 100 }}>
+        <View style={styles.headerContainer}>
           <LiveWeatherCard
             liveData={liveData}
             location={location}
@@ -219,7 +238,12 @@ const WeatherInfo = ({
             onPress={() => handleToggleCard(timestamp, matches)}
             activeOpacity={0.8}
             // ✨ 추가: 드롭다운이 열렸을 때 날씨 카드의 zIndex를 낮춰 겹치지 않게 합니다.
-            style={{ zIndex: isDropdownOpen ? -1 : 1 }}
+            // ▼ 동적 스타일을 StyleSheet와 삼항 연산자로 적용합니다.
+            style={
+              isDropdownOpen
+                ? styles.cardWrapperHidden
+                : styles.cardWrapperVisible
+            }
           >
             <View style={forcastCardStyles.cardContainer}>
               <RecommendTimeCard
@@ -240,7 +264,13 @@ const WeatherInfo = ({
       // ListEmptyComponent는 data 배열이 비어있을 때 표시될 UI를 정의합니다.
       ListEmptyComponent={
         // ✨ 변경점: 1. View로 감싸고 zIndex를 동적으로 적용합니다.
-        <View style={{ zIndex: isDropdownOpen ? -1 : 1 }}>
+        <View
+          style={
+            isDropdownOpen
+              ? styles.emptyContainerHidden
+              : styles.emptyContainerVisible
+          }
+        >
           <Text style={globalStyles.noDataText}>
             ✅ 선택하신 조건에 맞는 추천 시간대가 없네요!
           </Text>
@@ -280,10 +310,7 @@ const WeatherInfo = ({
       }
       // FlatList 자체에 스타일을 적용할 수 있습니다.
       style={globalStyles.container}
-      contentContainerStyle={[
-        globalStyles.scrollViewContent,
-        { overflow: 'visible' },
-      ]}
+      contentContainerStyle={globalStyles.scrollViewContent}
     />
   );
 };
