@@ -7,7 +7,8 @@ export const getLiveCardStyles = theme =>
     cardContainer: {
       backgroundColor: 'transparent', // 1. 배경을 투명하게 변경
       padding: 16, // 3. 예보 카드와 동일한 패딩
-      marginVertical: 8,
+      marginTop: -28,
+      marginBottom: 4,
       marginHorizontal: 15,
       borderRadius: 16,
       // 2. 그림자 효과(elevation, shadow) 속성 제거

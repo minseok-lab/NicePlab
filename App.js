@@ -2,7 +2,7 @@
 
 // --- 1. Import Section ---
 // 1) React 및 React Native 핵심 라이브러리
-import { Image, ScrollView, RefreshControl, StatusBar } from 'react-native';
+import { Image, StatusBar } from 'react-native';
 
 // 2) 서드파티 라이브러리
 import {
@@ -64,30 +64,24 @@ function AppContent() {
       <StatusBar barStyle={statusBar} />
       <Image source={currentLogo} style={styles.logo} />
 
-      {/* 2) ScrollView로 감싸서 화면이 작을 때도 스크롤 가능하도록 합니다. */}
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        // refreshing prop에 isLoading을, onRefresh prop에 refetch 함수를 직접 전달합니다.
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-        }
-      >
-        {/* JSX 내부에서 직접 조건부 렌더링을 수행합니다. */}
-        {isLoading && !weatherData && !liveData ? ( // 로딩 조건 구체화
-          <LoadingIndicator />
-        ) : errorMsg ? (
-          <ErrorMessage message={errorMsg} />
-        ) : weatherData ? (
-          <WeatherInfo
-            weatherData={weatherData}
-            liveData={liveData} // liveData를 prop으로 전달
-            plabMatches={plabMatches}
-            plabLink={PLAB_FOOTBALL_URL}
-            lastUpdateTime={lastUpdateTime}
-            season={season}
-          />
-        ) : null}
-      </ScrollView>
+      {/* JSX 내부에서 직접 조건부 렌더링을 수행합니다. */}
+      {isLoading && !weatherData && !liveData ? ( // 로딩 조건 구체화
+        <LoadingIndicator />
+      ) : errorMsg ? (
+        <ErrorMessage message={errorMsg} />
+      ) : weatherData ? (
+        <WeatherInfo
+          weatherData={weatherData}
+          liveData={liveData}
+          plabMatches={plabMatches}
+          plabLink={PLAB_FOOTBALL_URL}
+          lastUpdateTime={lastUpdateTime}
+          season={season}
+          // refetch 함수와 isLoading 상태를 FlatList에 전달하기 위해 props로 내려줍니다.
+          onRefresh={refetch}
+          isRefreshing={isLoading}
+        />
+      ) : null}
 
       {/* 3) Toast 메시지 컴포넌트 */}
       <Toast message={toastMessage} onDismiss={clearToast} />

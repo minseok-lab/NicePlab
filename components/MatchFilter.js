@@ -25,12 +25,34 @@ const MatchFilter = ({
   levelFilter,
   onLevelChange,
   theme,
+  onDropdownToggle,
 }) => {
   const styles = getMatchFilterStyles(theme);
 
   // ✨ 3. 각 드롭다운의 열림/닫힘 상태를 관리하기 위한 state를 추가합니다.
   const [genderOpen, setGenderOpen] = useState(false);
   const [levelOpen, setLevelOpen] = useState(false);
+
+  // ✨ 변경점: 드롭다운이 열리거나 닫힐 때 부모 컴포넌트에 알립니다.
+  const handleGenderOpen = () => {
+    setGenderOpen(true);
+    setLevelOpen(false); // 다른 드롭다운 닫기
+    onDropdownToggle(true);
+  };
+  const handleGenderClose = () => {
+    setGenderOpen(false);
+    onDropdownToggle(false);
+  };
+
+  const handleLevelOpen = () => {
+    setLevelOpen(true);
+    setGenderOpen(false); // 다른 드롭다운 닫기
+    onDropdownToggle(true);
+  };
+  const handleLevelClose = () => {
+    setLevelOpen(false);
+    onDropdownToggle(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -45,9 +67,11 @@ const MatchFilter = ({
           // value는 이제 배열입니다 (예: ['male', 'mixed'])
           value={genderFilter}
           items={GENDER_ITEMS}
-          setOpen={setGenderOpen}
+          setOpen={setGenderOpen} // 라이브러리 내부에서 상태를 토글합니다.
           // setValue는 상태 변경 함수를 직접 받습니다.
           setValue={onGenderChange}
+          onOpen={handleGenderOpen} // ✨ 변경점: 드롭다운 열릴 때 호출
+          onClose={handleGenderClose} // ✨ 변경점: 드롭다운 닫힐 때 호출
           placeholder="성별"
           // 스타일 관련 props
           style={styles.dropdownStyle}
@@ -68,6 +92,8 @@ const MatchFilter = ({
           items={LEVEL_ITEMS}
           setOpen={setLevelOpen}
           setValue={onLevelChange}
+          onOpen={handleLevelOpen} // ✨ 변경점: 드롭다운 열릴 때 호출
+          onClose={handleLevelClose} // ✨ 변경점: 드롭다운 닫힐 때 호출
           placeholder="레벨"
           // 스타일 관련 props
           style={styles.dropdownStyle}
