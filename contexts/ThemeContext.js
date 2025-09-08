@@ -1,7 +1,7 @@
 // contexts/ThemeContext.js
 
 import { createContext, useContext } from 'react';
-import { useDynamicGradient } from '../hooks/useDynamicGradient'; // ◀◀◀ 1. 우리가 만든 훅을 가져옵니다.
+import { useDynamicGradient } from '../hooks/useDynamicGradient';
 
 const ThemeContext = createContext(null);
 

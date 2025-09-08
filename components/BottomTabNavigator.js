@@ -23,7 +23,6 @@ const CtaButton = ({ styles, theme }) => {
       console.error("Couldn't load page", err),
     );
   };
-
   return (
     <TouchableOpacity
       style={styles.ctaContainer}
@@ -62,7 +61,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
@@ -74,19 +72,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             }
           };
 
-          let iconSource;
-          let label = options.title || route.name;
-          let a11yLabel = '';
-          let testID = '';
+          let iconSource, label, a11yLabel, testID;
 
           if (route.name === 'CurrentLocation') {
             label = '내 위치';
-            iconSource = icons.myLocation; // ◀◀◀ 아이콘 경로 수정
+            iconSource = icons.myLocation;
             a11yLabel = '내 위치';
             testID = 'tab-home';
           } else if (route.name === 'Search') {
             label = '검색하기';
-            iconSource = icons.search; // ◀◀◀ 아이콘 경로 수정
+            iconSource = icons.search;
             a11yLabel = '검색하기';
             testID = 'tab-search';
           }
@@ -110,7 +105,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                 source={iconSource}
                 style={[
                   styles.tabIcon,
-                  { tintColor: theme.textPrimary }, // 동적 색상 적용
+                  { tintColor: theme.textPrimary },
                   isFocused && styles.activeIcon,
                 ]}
                 resizeMode="contain"
@@ -118,7 +113,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               <Text
                 style={[
                   styles.tabLabel,
-                  { color: theme.textPrimary }, // 동적 색상 적용
+                  { color: theme.textPrimary },
                   isFocused && styles.activeLabel,
                 ]}
               >
@@ -138,17 +133,18 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
-      tabBar={props => <CustomTabBar {...props} />}
+      tabBar={CustomTabBar} // 항상 동일한 컴포넌트 참조를 전달
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="CurrentLocation" component={CurrentLocationScreen} />
       {/* CTA 버튼을 위한 더미 스크린. 실제로는 렌더링되지 않음 */}
       <Tab.Screen
         name="CtaDummy"
-        component={() => null}
         listeners={{ tabPress: e => e.preventDefault() }}
-      />
-      <Tab.Screen name="Search" component={SearchScreen} />
+      >
+        {() => null}
+      </Tab.Screen>
+      <Tab.Screen name="Search" component={CurrentLocationScreen} />
     </Tab.Navigator>
   );
 };

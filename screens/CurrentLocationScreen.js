@@ -4,7 +4,7 @@ import { Image, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 // 내부 모듈 및 스타일
-import { useWeather } from '../hooks';
+import { useWeather } from '../hooks/useWeather';
 import { useTheme } from '../contexts/ThemeContext';
 import { PLAB_FOOTBALL_URL } from '../constants';
 import {

@@ -7,7 +7,8 @@ import SunCalc from 'suncalc';
 
 // 2) styles, utils
 import { PALETTE } from '../styles';
-import { getUserLocationAndAddress, getTimePeriod } from '../utils';
+import { getUserLocationAndAddress } from '../utils/locationUtils';
+import { getTimePeriod } from '../utils/formatters/timePhaseFormatter';
 
 // 2. Helper Functions
 /**

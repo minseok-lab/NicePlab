@@ -2,7 +2,7 @@
 
 // 1. Import Section
 // 1) React
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import SunCalc from 'suncalc';
 
 // Utils 함수들을 가져옵니다.
@@ -17,6 +17,7 @@ import {
   processAndCombineData,
   fetchFilteredPlabMatches,
 } from '../utils/weatherDataHandler';
+import { getBestExerciseTimes } from '../utils/exercise/scoreCalculator';
 
 // ✨ 변경점: 2. useWeather 훅은 이제 '지휘자' 역할에만 집중합니다.
 export const useWeather = (locationName = '내 위치') => {
@@ -29,6 +30,8 @@ export const useWeather = (locationName = '내 위치') => {
   const [toastMessage, setToastMessage] = useState(null);
   const [season, setSeason] = useState('summer');
   const [daylightInfo, setDaylightInfo] = useState(null);
+  const [genderFilter, setGenderFilter] = useState([]);
+  const [levelFilter, setLevelFilter] = useState([]);
 
   const loadAllData = useCallback(
     async (isRefresh = false) => {
@@ -103,6 +106,83 @@ export const useWeather = (locationName = '내 위치') => {
     [locationName],
   );
 
+  // --- Memoized Data Processing ---
+  const finalRecommendedSlots = useMemo(() => {
+    // 1. 데이터가 준비되지 않았다면 즉시 빈 배열 반환
+    if (!weatherData?.list || !season || !plabMatches) {
+      return [];
+    }
+
+    // ✨ 3. Plab 매치 목록을 그룹화하기 전에, 현재 필터 조건에 따라 먼저 필터링합니다.
+    const filteredPlabMatches = plabMatches.filter(match => {
+      // ✨ 변경점: 2. 필터링 로직을 "배열이 비어있거나, 선택된 값을 포함하는지"로 수정합니다.
+      const genderMatch =
+        genderFilter.length === 0 || // 선택된 것이 없으면 모두 통과
+        (genderFilter.includes('male') && match.sex === 1) ||
+        (genderFilter.includes('female') && match.sex === -1) ||
+        (genderFilter.includes('mixed') && match.sex === 0);
+
+      const levelMatch =
+        levelFilter.length === 0 ||
+        (levelFilter.includes('amateur2_under') &&
+          match.display_level === '아마추어2 이하') ||
+        (levelFilter.includes('amateur4_above') &&
+          match.display_level === '아마추어4 이상') ||
+        (levelFilter.includes('general') && match.display_level === '누구나');
+
+      return genderMatch && levelMatch;
+    });
+
+    // 필터링된 매치 목록을 사용하여 시간대별 Map을 생성합니다.
+    // plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
+    // 이렇게 하면 매번 전체 배열을 순회할 필요가 없습니다.
+    const matchesByHour = new Map();
+    filteredPlabMatches.forEach(match => {
+      const matchDate = new Date(match.schedule);
+      // 'YYYY-MM-DDTHH:00:00.000Z' 형태로 시간 키를 정규화합니다.
+      const hourKey = new Date(
+        matchDate.getFullYear(),
+        matchDate.getMonth(),
+        matchDate.getDate(),
+        matchDate.getHours(),
+      ).toISOString();
+      if (!matchesByHour.has(hourKey)) {
+        matchesByHour.set(hourKey, []);
+      }
+      matchesByHour.get(hourKey).push(match);
+    });
+
+    // 3. 날씨 점수 기반 상위 후보 선정
+    const bestWeatherCandidates = getBestExerciseTimes(
+      weatherData.list,
+      season,
+    ).slice(0, 72); // 최대 72시간치 후보
+
+    const filteredWithMatches = [];
+
+    // 4. 날씨 좋은 시간대 후보를 순회합니다.
+    for (const weatherItem of bestWeatherCandidates) {
+      const slotStartTime = new Date(weatherItem.dt * 1000);
+      const hourKey = slotStartTime.toISOString();
+
+      // 5. [최적화] Map에서 O(1) 시간 복잡도로 해당 시간대의 매치를 즉시 조회합니다.
+      if (matchesByHour.has(hourKey)) {
+        // 6. [로직 개선] 매치가 있다면, 날씨 정보에 매치 목록을 포함시켜 최종 목록에 추가합니다.
+        filteredWithMatches.push({
+          ...weatherItem,
+          matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함
+        });
+      }
+
+      // 7. 최종 목록이 10개가 채워지면 종료
+      if (filteredWithMatches.length === 10) {
+        break;
+      }
+    }
+
+    return filteredWithMatches;
+  }, [weatherData, season, plabMatches, genderFilter, levelFilter]);
+
   useEffect(() => {
     loadAllData(false); // 첫 로딩
   }, [loadAllData]);
@@ -122,5 +202,10 @@ export const useWeather = (locationName = '내 위치') => {
     toastMessage,
     refetch,
     clearToast: () => setToastMessage(null),
+    genderFilter,
+    setGenderFilter,
+    levelFilter,
+    setLevelFilter,
+    finalRecommendedSlots,
   };
 };

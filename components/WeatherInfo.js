@@ -1,7 +1,7 @@
 // components/WeatherInfo.js
 
 // --- 1. Import Section ---
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   FlatList,
   View,
@@ -12,8 +12,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { fetchPlabMatchDetails } from '../api';
-import { getBestExerciseTimes } from '../utils';
-import { useDynamicGradient } from '../hooks';
+import { useWeather } from '../hooks/useWeather';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   getGlobalStyles,
   getRecommendTimeCardStyles,
@@ -44,110 +44,36 @@ const styles = StyleSheet.create({
 });
 
 // --- Main Component ---
-const WeatherInfo = ({
-  weatherData,
-  liveData,
-  plabMatches = [],
-  plabLink,
-  lastUpdateTime,
-  season,
-  daylightInfo,
-  onRefresh,
-  isRefreshing,
-}) => {
+const WeatherInfo = ({}) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
-  const { state, location } = useDynamicGradient();
+  const { state, location } = useTheme();
   const theme = PALETTE.themes[state];
   const globalStyles = getGlobalStyles(theme);
+
+  // 1. useWeather 훅에서 필요한 모든 것을 한번에 가져옵니다.
+  const {
+    finalRecommendedSlots,
+    liveData,
+    daylightInfo,
+    lastUpdateTime,
+    plabLink, // plabLink는 상수이므로 props나 다른 곳에서 받아와야 합니다.
+    onRefresh, // onRefresh와 isRefreshing도 useWeather에서 받아옵니다.
+    isRefreshing,
+    genderFilter,
+    setGenderFilter,
+    levelFilter,
+    setLevelFilter,
+  } = useWeather();
+
   const forcastCardStyles = getRecommendTimeCardStyles(theme);
 
   // --- State ---
   const [expandedTimestamp, setExpandedTimestamp] = useState(null);
   const [detailedMatches, setDetailedMatches] = useState({});
   const [loadingTimestamps, setLoadingTimestamps] = useState(new Set());
-  // 필터 상태를 관리하기 위한 useState 훅을 추가합니다.
-  const [genderFilter, setGenderFilter] = useState([]); // 'all', 'male', 'female', 'mixed'
-  const [levelFilter, setLevelFilter] = useState([]); // 'all', 'amateur2_under', 'amateur4_above', 'general'
 
   // 드롭다운 zIndex 적용을 위해 열림 상태를 추적합니다.
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // --- Memoized Data Processing ---
-  const finalRecommendedSlots = useMemo(() => {
-    // 1. 데이터가 준비되지 않았다면 즉시 빈 배열 반환
-    if (!weatherData?.list || !season || !plabMatches) {
-      return [];
-    }
-
-    // ✨ 3. Plab 매치 목록을 그룹화하기 전에, 현재 필터 조건에 따라 먼저 필터링합니다.
-    const filteredPlabMatches = plabMatches.filter(match => {
-      // ✨ 변경점: 2. 필터링 로직을 "배열이 비어있거나, 선택된 값을 포함하는지"로 수정합니다.
-      const genderMatch =
-        genderFilter.length === 0 || // 선택된 것이 없으면 모두 통과
-        (genderFilter.includes('male') && match.sex === 1) ||
-        (genderFilter.includes('female') && match.sex === -1) ||
-        (genderFilter.includes('mixed') && match.sex === 0);
-
-      const levelMatch =
-        levelFilter.length === 0 ||
-        (levelFilter.includes('amateur2_under') &&
-          match.display_level === '아마추어2 이하') ||
-        (levelFilter.includes('amateur4_above') &&
-          match.display_level === '아마추어4 이상') ||
-        (levelFilter.includes('general') && match.display_level === '누구나');
-
-      return genderMatch && levelMatch;
-    });
-
-    // 필터링된 매치 목록을 사용하여 시간대별 Map을 생성합니다.
-    // plabMatches를 시간대별로 조회할 수 있는 Map으로 변환합니다.
-    // 이렇게 하면 매번 전체 배열을 순회할 필요가 없습니다.
-    const matchesByHour = new Map();
-    filteredPlabMatches.forEach(match => {
-      const matchDate = new Date(match.schedule);
-      // 'YYYY-MM-DDTHH:00:00.000Z' 형태로 시간 키를 정규화합니다.
-      const hourKey = new Date(
-        matchDate.getFullYear(),
-        matchDate.getMonth(),
-        matchDate.getDate(),
-        matchDate.getHours(),
-      ).toISOString();
-      if (!matchesByHour.has(hourKey)) {
-        matchesByHour.set(hourKey, []);
-      }
-      matchesByHour.get(hourKey).push(match);
-    });
-
-    // 3. 날씨 점수 기반 상위 후보 선정
-    const bestWeatherCandidates = getBestExerciseTimes(
-      weatherData.list,
-      season,
-    ).slice(0, 72); // 최대 72시간치 후보
-
-    const filteredWithMatches = [];
-
-    // 4. 날씨 좋은 시간대 후보를 순회합니다.
-    for (const weatherItem of bestWeatherCandidates) {
-      const slotStartTime = new Date(weatherItem.dt * 1000);
-      const hourKey = slotStartTime.toISOString();
-
-      // 5. [최적화] Map에서 O(1) 시간 복잡도로 해당 시간대의 매치를 즉시 조회합니다.
-      if (matchesByHour.has(hourKey)) {
-        // 6. [로직 개선] 매치가 있다면, 날씨 정보에 매치 목록을 포함시켜 최종 목록에 추가합니다.
-        filteredWithMatches.push({
-          ...weatherItem,
-          matches: matchesByHour.get(hourKey), // 매치 목록을 여기에 포함
-        });
-      }
-
-      // 7. 최종 목록이 10개가 채워지면 종료
-      if (filteredWithMatches.length === 10) {
-        break;
-      }
-    }
-
-    return filteredWithMatches;
-  }, [weatherData, season, plabMatches, genderFilter, levelFilter]);
 
   // --- [개선] Event Handlers ---
   const handleToggleCard = useCallback(
@@ -246,10 +172,7 @@ const WeatherInfo = ({
             }
           >
             <View style={forcastCardStyles.cardContainer}>
-              <RecommendTimeCard
-                weatherItem={weatherItem}
-                location={location}
-              />
+              <RecommendTimeCard weatherItem={weatherItem} />
               {isExpanded && (
                 <MatchDetails
                   isLoading={isLoading}
