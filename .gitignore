@@ -142,3 +142,7 @@ vite.config.ts.timestamp-*
 
 # Expo files
 .expo/
+
+# Expo / React Native generated folders
+/android
+/ios

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Image } from 'react-native';
 
-import { useDynamicGradient } from '../hooks';
+import { useTheme } from '../contexts/ThemeContext';
 import { getRecommendTimeCardStyles, PALETTE } from '../styles';
 import {
   formatWeather,
@@ -18,11 +18,9 @@ import {
  * (TouchableOpacity로 감싸져서 사용됩니다)
  * @param {object} weatherItem - 특정 시간대의 모든 날씨 정보가 담긴 객체
  */
-const RecommendTimeCard = ({ weatherItem, location }) => {
-  // 1. 훅을 호출하여 현재 테마를 가져오고, 동적 스타일을 생성합니다.
-  const { state } = useDynamicGradient();
-  const theme = PALETTE.themes[state];
-  const styles = getRecommendTimeCardStyles(theme);
+const RecommendTimeCard = ({ weatherItem }) => {
+  // 훅을 호출하여 중앙에서 관리되는 테마 데이터를 가져옵니다.
+  const themeData = useTheme();
 
   // 2. 데이터 구조 분해 할당
   const {
@@ -37,7 +35,7 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
     pm25Grade,
   } = weatherItem;
 
-  // 3. useMemo를 사용해 props가 변경될 때만 값을 다시 계산합니다.
+  // useMemo를 사용해 props가 변경될 때만 값을 다시 계산합니다.
   const date = useMemo(() => new Date(dt * 1000), [dt]);
   const timeStr = useMemo(() => {
     const dayOfWeek = date.toLocaleString('ko-KR', { weekday: 'short' }); // '월', '화' 등 요일 추출
@@ -46,7 +44,10 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
     }월 ${date.getDate()}일 ${dayOfWeek}요일 ${date.getHours()}시`;
   }, [date]);
 
-  // 4. location 정보가 있을 경우에만 시간대 계산을 수행합니다.
+  // themeData가 없을 때를 대비해 location을 안전하게 사용합니다.
+  const location = themeData?.location;
+
+  // location 정보가 있을 경우에만 시간대 계산을 수행합니다.
   // isDay 계산 로직을 새로운 getTimePeriod 유틸리티로 교체합니다.
   const isDay = useMemo(() => {
     const timePeriod = location
@@ -61,6 +62,16 @@ const RecommendTimeCard = ({ weatherItem, location }) => {
     () => formatWeather(sky, pty, isDay),
     [sky, pty, isDay],
   );
+
+  // 테마 데이터가 로딩 중일 수 있으므로 안전장치를 추가합니다.
+  if (!themeData) {
+    return null;
+  }
+
+  // themeData에서 필요한 값을 추출합니다.
+  const { state } = themeData;
+  const theme = PALETTE.themes[state];
+  const styles = getRecommendTimeCardStyles(theme);
 
   const validUvIndex = typeof uvIndex === 'number' ? uvIndex : 0;
 
