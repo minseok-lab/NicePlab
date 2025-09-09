@@ -1,7 +1,8 @@
-// utils/locationUtils.js
+// locationResolver.js
 
 // --- 1. 모듈 및 상수 임포트 ---
 import * as Location from 'expo-location';
+import { findLocationByName } from './searchLocationUtils';
 import { PLAB_REGIONS, KMA_AREA_CODES } from '../constants';
 import { GYEONGGI_BUKBU_CITIES } from '../constants/gyeonggiRegions';
 import { ASOS_STATIONS } from '../constants/kmaAsosStations';
@@ -97,6 +98,10 @@ function findPlabRegionInfo(address) {
   // city를 district보다 우선적으로 사용하도록 순서를 설정합니다.
   const currentCity = city || district;
 
+  console.log(
+    `📍[Debug] Matching with: region='${region}', city='${city}', district='${district}' -> currentCity='${currentCity}'`,
+  );
+
   if (!region || !currentCity) {
     return null;
   }
@@ -113,10 +118,17 @@ function findPlabRegionInfo(address) {
   );
 
   if (!foundGroup) {
+    console.log(
+      `📍[Debug] Match failed. Could not find a matching group for region '${region}'.`,
+    );
     return null;
   }
 
   const userCityNormalized = currentCity.replace(/[시군구]$/, '');
+
+  console.log(
+    `📍[Debug] Normalized city for matching: '${userCityNormalized}'`,
+  );
 
   const foundArea = foundGroup.areas.find(area =>
     area.area_name.some(dataName => {
@@ -126,6 +138,9 @@ function findPlabRegionInfo(address) {
   );
 
   if (!foundArea) {
+    console.log(
+      `📍[Debug] Match failed. Could not find a matching area for '${userCityNormalized}' in the PLAB_REGIONS constant.`,
+    );
     return null;
   }
 
@@ -188,6 +203,10 @@ function getStationsSortedByDistance({ latitude, longitude }) {
 async function getGpsBasedRegionInfo() {
   try {
     const { coords, address } = await getUserLocationAndAddress();
+    console.log(
+      '📍[Debug] Reverse Geocoded Address:',
+      JSON.stringify(address, null, 2),
+    );
     const plabInfo = findPlabRegionInfo(address);
     if (!plabInfo) {
       throw new Error('Could not find a matching PLAB region for the address.');
@@ -235,22 +254,57 @@ export const getWeatherLocationInfo = async (locationName = '내 위치') => {
     return getCurrentLocationInfo();
   }
 
-  // "내 위치" 또는 그 외의 경우, GPS 기반으로 실제 위치를 탐색합니다.
-  console.log('------------------------------------------------------');
-  console.log('|--- 🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다. ---| ');
-  console.log('------------------------------------------------------');
-  const regionInfo = await getGpsBasedRegionInfo();
+  // '내 위치'일 경우에만 GPS 기반으로 위치를 탐색하도록 수정
+  if (locationName === '내 위치') {
+    console.log('------------------------------------------------------');
+    console.log('|--- 🛰️ GPS 기반으로 실제 사용자 위치를 탐색합니다. ---| ');
+    console.log('------------------------------------------------------');
+    const regionInfo = await getGpsBasedRegionInfo();
 
-  // GPS 정보 획득 실패 시, '현재 위치'(안양시) 정보로 대체합니다.
-  if (!regionInfo) {
-    console.warn(
-      "GPS 위치 정보 획득에 실패하여 '현재 위치'(안양시) 정보로 대체합니다.",
-    );
-    return getCurrentLocationInfo();
+    // GPS 정보 획득 실패 시, '현재 위치'(안양시) 정보로 대체합니다.
+    if (!regionInfo) {
+      console.warn(
+        "GPS 위치 정보 획득에 실패하여 '현재 위치'(안양시) 정보로 대체합니다.",
+      );
+      return getCurrentLocationInfo();
+    }
+
+    return regionInfo;
   }
 
-  return regionInfo;
+  // ✨ 3. 그 외의 경우 (검색된 지역 이름이 들어온 경우)
+  console.log(`🔍 '${locationName}' 지역 정보를 검색합니다.`);
+  const foundLocation = findLocationByName(locationName);
+
+  if (foundLocation) {
+    // 찾은 지역 정보를 바탕으로 findPlabRegionInfo가 이해할 수 있는 가상의 주소 객체를 만듭니다.
+    const mockAddress = {
+      region: foundLocation['1단계'],
+      city: foundLocation['2단계'],
+      district: foundLocation['2단계'], // city와 district를 동일하게 설정
+    };
+
+    // 2. 기존 로직을 재사용하여 Plab 매치 및 미세먼지에 필요한 정보를 생성합니다.
+    const plabInfo = findPlabRegionInfo(mockAddress);
+
+    // 3. kmaAreaCodes에서 찾은 정보와, plabInfo에서 찾은 정보를 합쳐
+    //    '완전한' locationInfo 객체를 만듭니다.
+    if (plabInfo) {
+      return {
+        ...plabInfo, // regionId, cities, currentCity, region, airQualityRegion 포함
+        areaNo: String(foundLocation['행정구역코드']),
+        grid: { nx: foundLocation.gridX, ny: foundLocation.gridY },
+        coords: { latitude: foundLocation.lat, longitude: foundLocation.lon },
+      };
+      // stationId, stationList 등 필요한 다른 정보들도 유사한 방식으로 찾아 추가할 수 있습니다.
+      // 지금은 핵심 정보만으로 구성합니다.
+    }
+  }
+
+  // 검색 실패 시 기본값(안양시) 반환
+  console.warn(`'${locationName}' 정보를 찾지 못해 기본 위치로 대체합니다.`);
+  return getCurrentLocationInfo();
 };
 
-// --- 7. 에러 발생 시 사용할 기본값 (기존과 동일, 이제 getCurrentLocationInfo로 대체 가능) ---
+// --- 7. 에러 발생 시 사용할 기본값 ---
 export const getDefaultRegionInfo = () => getCurrentLocationInfo();

@@ -7,3 +7,4 @@ export { getLiveCardStyles } from './liveWeatherCard.styles';
 export { getRecommendTimeCardStyles } from './RecommendTimeCard.styles';
 export { getMatchDetailsStyles } from './matchDetails.styles'; // 이 파일도 동일하게 적용합니다.
 export { getMatchFilterStyles } from './matchFilter.styles';
+export { getSearchScreenStyles } from './searchScreen.style'; // SearchScreen 스타일 추가

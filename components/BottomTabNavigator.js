@@ -1,15 +1,18 @@
 // components/BottomTabNavigator.js
 
 import { View, Text, TouchableOpacity, Image, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import LinearGradient from 'react-native-linear-gradient';
 import HapticFeedback from 'react-native-haptic-feedback';
 
-import { getTabNavigatorStyles, PALETTE } from '../styles';
+import { getTabNavigatorStyles } from '../styles/tabNavigator.styles';
+import { PALETTE } from '../styles/colors';
 import { PLAB_FOOTBALL_URL } from '../constants';
 import * as icons from '../assets/bottomTabBar';
 import { useTheme } from '../contexts/ThemeContext';
 import CurrentLocationScreen from '../screens/CurrentLocationScreen';
+import SearchScreen from '../screens/SearchScreen';
 
 const Tab = createBottomTabNavigator();
 /**
@@ -43,6 +46,7 @@ const CtaButton = ({ styles, theme }) => {
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   // 1. useTheme 훅을 호출하여 동적 테마 데이터를 가져옵니다.
   const themeData = useTheme();
+  const insets = useSafeAreaInsets(); // ◀◀◀ 훅을 호출하여 안전 영역 크기를 가져옵니다.
 
   // 2. 테마 데이터가 아직 로딩 중일 경우(초기 상태) 아무것도 렌더링하지 않습니다.
   if (!themeData) {
@@ -55,7 +59,10 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const styles = getTabNavigatorStyles(theme);
 
   return (
-    <View style={styles.tabBarContainerWrapper} testID="tabbar-root">
+    <View
+      style={[styles.tabBarContainerWrapper, { bottom: insets.bottom }]}
+      testID="tabbar-root"
+    >
       <CtaButton styles={styles} theme={theme} />
       <LinearGradient colors={colors} style={styles.tabBarContainer}>
         {state.routes.map((route, index) => {
@@ -76,12 +83,12 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
           if (route.name === 'CurrentLocation') {
             label = '내 위치';
-            iconSource = icons.myLocation;
+            iconSource = icons.locationIcon;
             a11yLabel = '내 위치';
             testID = 'tab-home';
           } else if (route.name === 'Search') {
             label = '검색하기';
-            iconSource = icons.search;
+            iconSource = icons.searchIcon;
             a11yLabel = '검색하기';
             testID = 'tab-search';
           }
@@ -133,7 +140,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
-      tabBar={CustomTabBar} // 항상 동일한 컴포넌트 참조를 전달
+      tabBar={props => <CustomTabBar {...props} />} // 항상 동일한 컴포넌트 참조를 전달
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="CurrentLocation" component={CurrentLocationScreen} />
@@ -144,7 +151,7 @@ const BottomTabNavigator = () => {
       >
         {() => null}
       </Tab.Screen>
-      <Tab.Screen name="Search" component={CurrentLocationScreen} />
+      <Tab.Screen name="Search" component={SearchScreen} />
     </Tab.Navigator>
   );
 };

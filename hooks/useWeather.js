@@ -9,7 +9,7 @@ import SunCalc from 'suncalc';
 import {
   getWeatherLocationInfo,
   getDefaultRegionInfo,
-} from '../utils/locationUtils';
+} from '../utils/locationResolver';
 import {
   loadCachedData,
   updateCachedData,

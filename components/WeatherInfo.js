@@ -6,13 +6,10 @@ import {
   FlatList,
   View,
   Text,
-  Button,
-  Linking,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { fetchPlabMatchDetails } from '../api';
-import { useWeather } from '../hooks/useWeather';
+import { fetchPlabMatchDetails } from '../apis';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   getGlobalStyles,
@@ -44,26 +41,23 @@ const styles = StyleSheet.create({
 });
 
 // --- Main Component ---
-const WeatherInfo = ({}) => {
+// 1. 필요한 모든 데이터를 props로 받도록 정의합니다.
+const WeatherInfo = ({
+  finalRecommendedSlots,
+  liveData,
+  daylightInfo,
+  lastUpdateTime,
+  onRefresh,
+  isRefreshing,
+  genderFilter,
+  setGenderFilter,
+  levelFilter,
+  setLevelFilter,
+}) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
   const { state, location } = useTheme();
   const theme = PALETTE.themes[state];
   const globalStyles = getGlobalStyles(theme);
-
-  // 1. useWeather 훅에서 필요한 모든 것을 한번에 가져옵니다.
-  const {
-    finalRecommendedSlots,
-    liveData,
-    daylightInfo,
-    lastUpdateTime,
-    plabLink, // plabLink는 상수이므로 props나 다른 곳에서 받아와야 합니다.
-    onRefresh, // onRefresh와 isRefreshing도 useWeather에서 받아옵니다.
-    isRefreshing,
-    genderFilter,
-    setGenderFilter,
-    levelFilter,
-    setLevelFilter,
-  } = useWeather();
 
   const forcastCardStyles = getRecommendTimeCardStyles(theme);
 
@@ -202,14 +196,6 @@ const WeatherInfo = ({}) => {
       // ListFooterComponent는 목록의 최하단에 한 번만 렌더링될 컴포넌트를 지정합니다.
       ListFooterComponent={
         <>
-          {/* 하단 버튼 및 푸터 */}
-          <View style={globalStyles.buttonContainer}>
-            <Button
-              title="플랩에서 더 많은 매치 찾기"
-              onPress={() => Linking.openURL(plabLink)}
-            />
-          </View>
-
           <View style={globalStyles.footerContainer}>
             <Text style={globalStyles.footerText}>
               기상정보출처: 기상청, 에어코리아
