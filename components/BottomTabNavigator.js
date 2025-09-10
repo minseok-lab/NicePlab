@@ -3,13 +3,13 @@
 import { View, Text, TouchableOpacity, Image, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import LinearGradient from 'react-native-linear-gradient';
 import HapticFeedback from 'react-native-haptic-feedback';
 
 import { getTabNavigatorStyles } from '../styles/tabNavigator.styles';
 import { PALETTE } from '../styles/colors';
 import { PLAB_FOOTBALL_URL } from '../constants';
 import * as icons from '../assets/bottomTabBar';
+import { useLocation } from '../contexts/LocationContext';
 import { useTheme } from '../contexts/ThemeContext';
 import CurrentLocationScreen from '../screens/CurrentLocationScreen';
 import SearchScreen from '../screens/SearchScreen';
@@ -46,6 +46,7 @@ const CtaButton = ({ styles, theme }) => {
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   // 1. useTheme 훅을 호출하여 동적 테마 데이터를 가져옵니다.
   const themeData = useTheme();
+  const { setLocationName } = useLocation(); // ✨ 2. LocationContext에서 setLocationName 함수를 가져옵니다.
   const insets = useSafeAreaInsets(); // ◀◀◀ 훅을 호출하여 안전 영역 크기를 가져옵니다.
 
   // 2. 테마 데이터가 아직 로딩 중일 경우(초기 상태) 아무것도 렌더링하지 않습니다.
@@ -54,7 +55,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   }
 
   // 3. themeData에서 필요한 값을 추출합니다.
-  const { colors, state: timePeriod } = themeData;
+  const { state: timePeriod } = themeData;
   const theme = PALETTE.themes[timePeriod] || PALETTE.themes.day;
   const styles = getTabNavigatorStyles(theme);
 
@@ -64,9 +65,13 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
       testID="tabbar-root"
     >
       <CtaButton styles={styles} theme={theme} />
-      <LinearGradient colors={colors} style={styles.tabBarContainer}>
+      <View
+        style={[
+          styles.tabBarContainer,
+          { backgroundColor: theme.gradient.start }, // 그라데이션의 시작 색상을 배경색으로 사용
+        ]}
+      >
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
           const onPress = () => {
             const event = navigation.emit({
@@ -74,6 +79,12 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               target: route.key,
               canPreventDefault: true,
             });
+            if (route.name === 'CurrentLocation') {
+              console.log(
+                "내 위치 탭 클릭: GPS 재탐색을 위해 locationName을 '내 위치'로 설정합니다.",
+              );
+              setLocationName('내 위치');
+            }
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
             }
@@ -129,7 +140,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             </TouchableOpacity>
           );
         })}
-      </LinearGradient>
+      </View>
     </View>
   );
 };

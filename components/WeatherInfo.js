@@ -53,6 +53,7 @@ const WeatherInfo = ({
   setGenderFilter,
   levelFilter,
   setLevelFilter,
+  timezone,
 }) => {
   // ▼ 2. 훅을 호출하여 현재 테마를 가져오고, 모든 동적 스타일을 생성합니다.
   const { state, location } = useTheme();
@@ -134,6 +135,7 @@ const WeatherInfo = ({
             liveData={liveData}
             location={location}
             daylightInfo={daylightInfo}
+            timezone={timezone}
           />
           <Text style={globalStyles.subHeader}>추천 시간대 TOP 10</Text>
           <MatchFilter
@@ -166,7 +168,10 @@ const WeatherInfo = ({
             }
           >
             <View style={forcastCardStyles.cardContainer}>
-              <RecommendTimeCard weatherItem={weatherItem} />
+              <RecommendTimeCard
+                weatherItem={weatherItem}
+                timezone={timezone}
+              />
               {isExpanded && (
                 <MatchDetails
                   isLoading={isLoading}

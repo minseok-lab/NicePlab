@@ -5,8 +5,11 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
 
+// assets에서 낮/밤 위치 아이콘을 가져옵니다.
+import { locationIcon, darkLocationIcon } from '../assets/bottomTabBar';
+
 // 2) 스타일 및 유틸리티
-import { useDynamicGradient } from '../hooks';
+import { useTheme } from '../contexts/ThemeContext';
 import { getLiveCardStyles, PALETTE } from '../styles';
 import {
   formatWeather,
@@ -21,9 +24,9 @@ import LoadingIndicator from './LoadingIndicator';
 /**
  * props로 받은 실시간 날씨 정보를 표시하는 단순 뷰 컴포넌트입니다.
  */
-const LiveWeatherCard = ({ liveData, location, daylightInfo }) => {
+const LiveWeatherCard = ({ liveData, location }) => {
   // ▼ 2. 훅을 호출하여 현재 테마와 상태를 가져옵니다.
-  const { state } = useDynamicGradient();
+  const { state } = useTheme();
   const theme = PALETTE.themes[state];
 
   // ▼ 3. 테마를 인자로 전달하여 동적 스타일 객체를 생성합니다.
@@ -47,6 +50,9 @@ const LiveWeatherCard = ({ liveData, location, daylightInfo }) => {
 
   // 낮 시간대(아이콘 표시용)를 'day' 또는 'sunrise'로 정의합니다.
   const isDay = timePeriod === 'day' || timePeriod === 'sunrise';
+
+  // ✨ 2. isDay 값에 따라 표시할 아이콘을 선택합니다.
+  const currentIcon = isDay ? darkLocationIcon : locationIcon;
 
   // ✨ 변경점: 3. 날짜 포맷팅 로직도 일관성을 위해 useMemo로 감싸줍니다.
   const hours = String(now.getHours()).padStart(2, '0');
@@ -95,7 +101,10 @@ const LiveWeatherCard = ({ liveData, location, daylightInfo }) => {
         {/* 헤더 */}
         <View style={styles.header}>
           <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>🗺️ {locationName}</Text>
+            <View style={styles.locationAndIconContainer}>
+              <Image source={currentIcon} style={styles.locationIcon} />
+              <Text style={styles.locationText}>{locationName}</Text>
+            </View>
             <Text style={styles.dateText}>{formattedDateTime}</Text>
           </View>
           <View

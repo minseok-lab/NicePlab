@@ -17,7 +17,7 @@ export const getSearchScreenStyles = theme =>
       paddingHorizontal: 15,
       margin: 16,
       fontSize: 16,
-      color: theme.textPrimary,
+      color: theme.black,
       borderColor: theme.border,
       backgroundColor: theme.cardBackground,
     },
@@ -27,7 +27,7 @@ export const getSearchScreenStyles = theme =>
       padding: 16,
       borderBottomWidth: 1,
       fontSize: 16,
-      color: theme.textPrimary,
+      color: theme.black,
       borderBottomColor: theme.border,
     },
 

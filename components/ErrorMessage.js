@@ -2,12 +2,12 @@
 
 import { Text } from 'react-native';
 // ▼ 1. 훅과 동적 스타일 유틸리티를 import 합니다.
-import { useDynamicGradient } from '../hooks';
+import { useTheme } from '../contexts/ThemeContext';
 import { getGlobalStyles, PALETTE } from '../styles';
 
 const ErrorMessage = ({ message }) => {
   // ▼ 2. 훅을 호출하여 현재 테마와 스타일을 가져옵니다.
-  const { state } = useDynamicGradient();
+  const { state } = useTheme();
   const theme = PALETTE.themes[state];
   const styles = getGlobalStyles(theme);
 

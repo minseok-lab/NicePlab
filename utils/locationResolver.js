@@ -124,7 +124,16 @@ function findPlabRegionInfo(address) {
     return null;
   }
 
-  const userCityNormalized = currentCity.replace(/[시군구]$/, '');
+  let userCityNormalized;
+  if (currentCity.includes('시')) {
+    // '시'가 포함된 경우 (e.g., '천안시동남구', '수원시팔달구')
+    // '시'를 기준으로 문자열을 잘라 앞부분을 사용합니다. -> '천안', '수원'
+    userCityNormalized = currentCity.split('시')[0];
+  } else {
+    // '시'가 없는 경우 (e.g., '종로구', '강남구')
+    // 기존처럼 마지막 '구'만 제거합니다. -> '종로', '강남'
+    userCityNormalized = currentCity.replace(/구$/, '');
+  }
 
   console.log(
     `📍[Debug] Normalized city for matching: '${userCityNormalized}'`,
@@ -144,12 +153,7 @@ function findPlabRegionInfo(address) {
     return null;
   }
 
-  const suffix = currentCity.endsWith('구') ? '구' : '시';
-
-  const citiesInArea = foundArea.area_name.map(name => {
-    const normalizedName = name.replace(/[시군구]$/, '');
-    return `${normalizedName}${suffix}`;
-  });
+  const citiesInArea = foundArea.area_name;
 
   return {
     regionId: foundGroup.id,
@@ -216,9 +220,17 @@ async function getGpsBasedRegionInfo() {
 
     // 새로 만든 함수를 호출합니다.
     const stationList = getStationsSortedByDistance(coords);
+    const timezone = address.timezone || 'Asia/Seoul';
 
     // 최종 반환 객체에 stationName을 포함시킵니다.
-    return { coords, ...plabInfo, ...kmaInfo, stationId, stationList };
+    return {
+      coords,
+      ...plabInfo,
+      ...kmaInfo,
+      stationId,
+      stationList,
+      timezone,
+    };
   } catch (error) {
     console.error('Failed to get GPS-based region information:', error.message);
     return null;
@@ -239,6 +251,7 @@ function getCurrentLocationInfo() {
     stationList: [
       { stationName: '부림동', lat: 37.394295443, lon: 126.956832814 },
     ],
+    timezone: 'Asia/Seoul',
   };
 }
 
@@ -295,6 +308,7 @@ export const getWeatherLocationInfo = async (locationName = '내 위치') => {
         areaNo: String(foundLocation['행정구역코드']),
         grid: { nx: foundLocation.gridX, ny: foundLocation.gridY },
         coords: { latitude: foundLocation.lat, longitude: foundLocation.lon },
+        timezone: 'Asia/Seoul', // ✨ 검색된 위치에도 타임존 정보 추가
       };
       // stationId, stationList 등 필요한 다른 정보들도 유사한 방식으로 찾아 추가할 수 있습니다.
       // 지금은 핵심 정보만으로 구성합니다.

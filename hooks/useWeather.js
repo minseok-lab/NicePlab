@@ -3,13 +3,10 @@
 // 1. Import Section
 // 1) React
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import SunCalc from 'suncalc';
+import { useLocation } from '../contexts/LocationContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Utils 함수들을 가져옵니다.
-import {
-  getWeatherLocationInfo,
-  getDefaultRegionInfo,
-} from '../utils/locationResolver';
 import {
   loadCachedData,
   updateCachedData,
@@ -20,7 +17,9 @@ import {
 import { getBestExerciseTimes } from '../utils/exercise/scoreCalculator';
 
 // ✨ 변경점: 2. useWeather 훅은 이제 '지휘자' 역할에만 집중합니다.
-export const useWeather = (locationName = '내 위치') => {
+export const useWeather = () => {
+  const { locationInfo } = useLocation();
+  const { daylightInfo } = useTheme();
   const [weatherData, setWeatherData] = useState(null);
   const [liveData, setLiveData] = useState(null);
   const [plabMatches, setPlabMatches] = useState([]);
@@ -29,41 +28,33 @@ export const useWeather = (locationName = '내 위치') => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [season, setSeason] = useState('summer');
-  const [daylightInfo, setDaylightInfo] = useState(null);
   const [genderFilter, setGenderFilter] = useState([]);
   const [levelFilter, setLevelFilter] = useState([]);
 
   const loadAllData = useCallback(
     async (isRefresh = false) => {
-      // 당겨서 새로고침이 아닐 때만 전체 로딩 상태를 true로 설정
-      if (!isRefresh) setIsLoading(true);
+      // 데이터 로딩을 시작하기 전에, 이전 상태를 모두 깨끗하게 초기화합니다.
+      setIsLoading(true);
       setErrorMsg(null);
+      // isRefresh(당겨서 새로고침)가 아닐 때만 기존 데이터를 비웁니다.
+      // 이렇게 하면 당겨서 새로고침 시 화면이 깜빡이는 것을 방지할 수 있습니다.
+      if (!isRefresh) {
+        setWeatherData(null);
+        setLiveData(null);
+        setPlabMatches([]);
+      }
+      // locationInfo가 준비되지 않았으면 로딩을 중단합니다.
+      if (!locationInfo) {
+        setErrorMsg('위치 정보를 찾을 수 없습니다.');
+        setIsLoading(false);
+        return;
+      }
 
       try {
         // 캐시 데이터를 'cached' 변수에 저장합니다.
         const cached = await loadCachedData();
 
-        // Step 1: 캐시 로드 (새로고침이 아닐 때만)
-        if (!isRefresh) {
-          if (cached.weather) setWeatherData(cached.weather);
-          if (cached.plab) setPlabMatches(cached.plab);
-          if (cached.live) setLiveData(cached.live);
-          if (cached.time) setLastUpdateTime(cached.time);
-        } // Step 2: 위치 정보 및 모든 API 데이터 가져오기
-
-        const locationInfo =
-          (await getWeatherLocationInfo(locationName)) ||
-          getDefaultRegionInfo();
-        if (!locationInfo) throw new Error('위치 정보를 확인할 수 없습니다.');
-
-        if (locationInfo.coords) {
-          const times = SunCalc.getTimes(
-            new Date(),
-            locationInfo.coords.latitude,
-            locationInfo.coords.longitude,
-          );
-          setDaylightInfo({ sunrise: times.sunrise, sunset: times.sunset });
-        }
+        // Step 2: 원격 API에서 모든 필요한 데이터를 가져옵니다.
         const apiResults = await fetchAllRemoteData(locationInfo);
 
         // Step 3: API 결과 처리
@@ -103,7 +94,7 @@ export const useWeather = (locationName = '내 위치') => {
         setIsLoading(false);
       }
     },
-    [locationName],
+    [locationInfo],
   );
 
   // --- Memoized Data Processing ---
@@ -207,5 +198,6 @@ export const useWeather = (locationName = '내 위치') => {
     levelFilter,
     setLevelFilter,
     finalRecommendedSlots,
+    timezone: locationInfo?.timezone, // ✨ locationInfo에서 직접 timezone 반환
   };
 };

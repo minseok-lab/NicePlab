@@ -31,6 +31,19 @@ export const getLiveCardStyles = theme =>
     locationContainer: {
       flexDirection: 'column',
       alignItems: 'flex-start',
+      flex: 1,
+    },
+    // ✨ 1. 아이콘과 지역 이름을 함께 묶는 컨테이너 스타일을 추가합니다.
+    locationAndIconContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    // ✨ 2. 아이콘의 크기와 오른쪽 여백을 지정하는 스타일을 추가합니다.
+    locationIcon: {
+      width: 16,
+      height: 16,
+      marginRight: 6,
     },
     locationText: {
       fontSize: 20,

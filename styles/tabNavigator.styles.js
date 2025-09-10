@@ -53,7 +53,7 @@ export const getTabNavigatorStyles = theme =>
     // --- 중앙 CTA 버튼 ---
     ctaContainer: {
       position: 'absolute',
-      top: -20, // offsetY: -20
+      top: -32, // offsetY: -20
       left: '50%',
       marginLeft: -32, // size(64)의 절반
       width: 64,
@@ -68,7 +68,7 @@ export const getTabNavigatorStyles = theme =>
     ctaButton: {
       width: 64,
       height: 64,
-      borderRadius: 12, // 다이아몬드 모양을 위한 약간의 둥글기
+      borderRadius: 16, // 다이아몬드 모양을 위한 약간의 둥글기
       backgroundColor: theme.background,
       justifyContent: 'center',
       alignItems: 'center',

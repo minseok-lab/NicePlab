@@ -73,9 +73,20 @@ const MatchItem = React.memo(({ match, theme }) => {
   return (
     <TouchableOpacity style={styles.matchItemContainer} onPress={handlePress}>
       <View style={styles.titleContainer}>
-        <Text style={[styles.matchInfoText, styles.matchLink]}>
-          {`⚽  ${match.label_title}`}
-        </Text>
+        {/* ✨ 1. Text 컴포넌트를 View로 한 번 감싸줍니다. */}
+        <View style={styles.matchTitleWrapper}>
+          {/* ✨ 1. 중첩된 Text 구조로 변경하여 렌더링 안정성을 확보합니다. */}
+          <Text
+            style={styles.matchInfoText}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {/* 이모지와 공백을 안쪽 Text에 넣어 독립적인 스타일링을 피합니다. */}
+            <Text>⚽ </Text>
+            {/* 부모 Text의 스타일(bold 등)을 그대로 상속받습니다. */}
+            {match.label_title}
+          </Text>
+        </View>
 
         {typeof match.is_earlybird === 'number' && (
           <SvgUri

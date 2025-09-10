@@ -33,7 +33,11 @@ export const getMatchDetailsStyles = theme =>
       // ✨ FIX: 공간이 부족하면 자식 요소(아이콘)들이 다음 줄로 넘어가도록 설정합니다.
       flexWrap: 'wrap',
     },
-
+    // ✨ 2. Text를 감싸는 View를 위한 새로운 스타일을 추가합니다.
+    matchTitleWrapper: {
+      flex: 1, // 이 컨테이너가 남은 공간을 모두 차지하도록 합니다.
+      marginRight: 5, // 아이콘과의 간격을 위해 margin을 여기로 옮깁니다.
+    },
     // --- 매치 제목 ("⚽️ 실내 풋살") ---
     matchInfoText: {
       // ⭐ 이름 통일: infoText -> matchInfoText
@@ -42,7 +46,6 @@ export const getMatchDetailsStyles = theme =>
       fontWeight: 'bold',
       // ✨ FIX 1: 텍스트의 줄 높이를 폰트 크기와 비슷하게 설정하여 상하 여백을 줄입니다.
       lineHeight: 18,
-      marginRight: 5,
       // ✨ FIX 2: (Android) 폰트 자체의 여백을 제거합니다.
       includeFontPadding: false,
     },
@@ -67,7 +70,7 @@ export const getMatchDetailsStyles = theme =>
     // --- 레벨 아이콘과 텍스트를 감싸는 컨테이너 ---
     matchDetailsContainer: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start', // 텍스트가 여러 줄일 경우 위쪽에 정렬
     },
     // ▼ [추가] 레벨 뱃지 아이콘 스타일
     badgeIcon: {

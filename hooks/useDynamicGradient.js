@@ -7,8 +7,8 @@ import SunCalc from 'suncalc';
 
 // 2) styles, utils
 import { PALETTE } from '../styles';
-import { getUserLocationAndAddress } from '../utils/locationResolver';
 import { getTimePeriod } from '../utils/formatters/timePhaseFormatter';
+import { useLocation } from '../contexts/LocationContext';
 
 // 2. Helper Functions
 /**
@@ -52,8 +52,8 @@ function getMillisecondsUntilNextEvent(sunTimes) {
  * 2) @description 현재 시간대에 따라 동적인 그라데이션과 테마를 제공하는 커스텀 훅
  */
 export function useDynamicGradient() {
+  const { locationInfo } = useLocation(); // ✨ Context에서 locationInfo를 가져옴
   const [timePeriod, setTimePeriod] = useState('day'); // 현재 시간대 (day, night 등)
-  const [location, setLocation] = useState(null); // 사용자 위치 { latitude, longitude }
 
   const updateTheme = useCallback((latitude, longitude) => {
     // 주어진 위치와 현재 시간을 기준으로 테마를 업데이트합니다.
@@ -82,34 +82,22 @@ export function useDynamicGradient() {
       }, delay);
     };
 
-    const initialize = async () => {
-      try {
-        const locationData = await getUserLocationAndAddress();
-        if (!locationData?.coords) {
-          throw new Error('위치 정보를 가져올 수 없습니다.');
-        }
-
-        const { latitude, longitude } = locationData.coords;
-        setLocation({ latitude, longitude });
-
-        // 1. 초기 테마를 즉시 설정합니다.
-        const initialSunTimes = updateTheme(latitude, longitude);
-
-        // 2. 다음 테마 변경을 스케줄링합니다.
-        scheduleNextUpdate(initialSunTimes);
-      } catch (error) {
-        console.error('동적 그라데이션 설정 실패:', error.message);
-        setTimePeriod('day'); // 에러 발생 시 '낮' 테마로 fallback
-      }
-    };
-
-    initialize();
+    // ✨ locationInfo가 유효할 때만 테마를 계산하고 업데이트를 스케줄링합니다.
+    if (locationInfo?.coords) {
+      const { latitude, longitude } = locationInfo.coords;
+      const initialSunTimes = updateTheme(latitude, longitude);
+      scheduleNextUpdate(initialSunTimes);
+    } else {
+      setTimePeriod('day'); // 위치 정보가 없으면 낮 테마로 fallback
+    }
 
     // 컴포넌트가 언마운트될 때 타이머를 반드시 정리합니다.
     return () => {
       if (timerId) clearTimeout(timerId);
     };
-  }, [updateTheme]); // updateTheme는 useCallback으로 감싸져 있어 한번만 생성됩니다.
+  }, [locationInfo, updateTheme]);
+  // updateTheme는 useCallback으로 감싸져 있어 한번만 생성됩니다.
+  // ✨ locationInfo가 변경될 때마다 이 효과가 다시 실행됩니다.
 
   // PALETTE에서 현재 시간대에 맞는 테마 정보를 가져옵니다.
   // 안전하게 기본값을 제공하여 currentTheme이 없는 경우를 대비합니다.
@@ -119,6 +107,9 @@ export function useDynamicGradient() {
     colors: [currentTheme.gradient.start, currentTheme.gradient.end],
     statusBar: currentTheme.statusBar,
     state: timePeriod,
-    location,
+    // ✨ locationInfo에서 직접 location을 전달
+    location: locationInfo
+      ? { name: locationInfo.currentCity, region: locationInfo.region }
+      : null,
   };
 }

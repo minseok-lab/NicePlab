@@ -2,7 +2,7 @@
 
 import { View, ActivityIndicator, Text } from 'react-native';
 // 훅과 동적 스타일 유틸리티를 import 합니다.
-import { useDynamicGradient } from '../hooks';
+import { useTheme } from '../contexts/ThemeContext';
 import { getGlobalStyles, PALETTE } from '../styles';
 
 // 1. props로 size와 text를 받고, 기본값을 설정해줍니다.
@@ -10,7 +10,7 @@ const LoadingIndicator = ({
   size = 'large',
   text = '날씨 데이터를 불러오는 중...',
 }) => {
-  const { state } = useDynamicGradient();
+  const { state } = useTheme();
   const theme = PALETTE.themes[state];
   const styles = getGlobalStyles(theme);
 
