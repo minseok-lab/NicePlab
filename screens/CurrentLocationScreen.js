@@ -8,7 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 // 내부 모듈 및 스타일
 import { useWeather } from '../hooks/useWeather';
 import { useTheme } from '../contexts/ThemeContext';
-import { PLAB_FOOTBALL_URL } from '../constants';
 import {
   WeatherInfo,
   LoadingIndicator,
@@ -23,25 +22,11 @@ import LogoWhite from '../assets/nicePlabLogoWhite.png';
 
 export default function CurrentLocationScreen() {
   const navigation = useNavigation();
-  const {
-    weatherData,
-    liveData,
-    errorMsg,
-    isLoading,
-    plabMatches,
-    lastUpdateTime,
-    season,
-    refetch,
-    toastMessage,
-    clearToast,
-    // WeatherInfo에 전달해야 할 값들
-    finalRecommendedSlots,
-    daylightInfo,
-    genderFilter,
-    setGenderFilter,
-    levelFilter,
-    setLevelFilter,
-  } = useWeather();
+  // useWeather 훅의 반환값을 하나의 객체로 받아 코드를 단순화합니다.
+  const weatherHookData = useWeather();
+
+  // ✨ 2. weatherHookData 객체에서 컴포넌트 스코프에서 직접 필요한 변수들만 구조 분해합니다.
+  const { refetch, toastMessage, clearToast } = weatherHookData;
 
   // ThemeProvider를 통해 전달된 테마 데이터를 가져옵니다.
   const themeData = useTheme();
@@ -61,10 +46,10 @@ export default function CurrentLocationScreen() {
 
   // 테마 데이터가 아직 로딩 중이면(초기 상태) 아무것도 표시하지 않습니다.
   if (!themeData) {
-    return null;
+    return <LoadingIndicator />;
   }
 
-  const { colors, statusBar, state } = themeData;
+  const { colors, statusBar, state, daylightInfo } = themeData;
   const theme = PALETTE.themes[state];
   const styles = getGlobalStyles(theme);
   const currentLogo = state === 'night' ? LogoWhite : LogoBlack;
@@ -74,27 +59,20 @@ export default function CurrentLocationScreen() {
       <StatusBar barStyle={statusBar} />
       <Image source={currentLogo} style={styles.logo} />
 
-      {isLoading && !weatherData && !liveData ? (
+      {weatherHookData.isLoading &&
+      !weatherHookData.weatherData &&
+      !weatherHookData.liveData ? (
         <LoadingIndicator />
-      ) : errorMsg ? (
-        <ErrorMessage message={errorMsg} />
-      ) : weatherData ? (
-        // ◀◀◀ useWeather에서 받은 모든 값을 WeatherInfo에 props로 전달합니다.
+      ) : weatherHookData.errorMsg ? (
+        <ErrorMessage message={weatherHookData.errorMsg} />
+      ) : weatherHookData.weatherData ? (
+        // ✨ 4. WeatherInfo에 weatherHookData의 모든 속성을 한번에 전달하고,
+        //    이름이 다른 prop과 다른 훅에서 온 prop을 추가로 전달합니다.
         <WeatherInfo
-          weatherData={weatherData}
-          liveData={liveData}
-          plabMatches={plabMatches}
-          plabLink={PLAB_FOOTBALL_URL}
-          lastUpdateTime={lastUpdateTime}
-          season={season}
-          onRefresh={refetch}
-          isRefreshing={isLoading}
-          finalRecommendedSlots={finalRecommendedSlots}
+          {...weatherHookData}
+          onRefresh={weatherHookData.refetch}
+          isRefreshing={weatherHookData.isLoading}
           daylightInfo={daylightInfo}
-          genderFilter={genderFilter}
-          setGenderFilter={setGenderFilter}
-          levelFilter={levelFilter}
-          setLevelFilter={setLevelFilter}
         />
       ) : null}
 

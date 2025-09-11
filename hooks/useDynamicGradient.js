@@ -107,9 +107,5 @@ export function useDynamicGradient() {
     colors: [currentTheme.gradient.start, currentTheme.gradient.end],
     statusBar: currentTheme.statusBar,
     state: timePeriod,
-    // ✨ locationInfo에서 직접 location을 전달
-    location: locationInfo
-      ? { name: locationInfo.currentCity, region: locationInfo.region }
-      : null,
   };
 }

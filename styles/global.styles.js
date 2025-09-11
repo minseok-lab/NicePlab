@@ -64,6 +64,7 @@ export const getGlobalStyles = theme =>
       textAlign: 'center',
       fontSize: 16,
       marginTop: 32,
+      marginBottom: 32,
       color: theme.textSecondary,
     },
   });

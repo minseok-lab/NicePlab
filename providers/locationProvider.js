@@ -29,12 +29,26 @@ export async function fetchUserGpsLocation() {
  * @returns {Object | undefined} 찾은 지역 정보 객체
  */
 export const findLocationDataByName = name => {
-  return KMA_AREA_CODES.find(
-    item => `${item['1단계']} ${item['2단계']}` === name,
-  );
+  // ⭐ KMA_AREA_CODES 배열 전체를 순회하며 일치하는 지역을 찾습니다.
+  return KMA_AREA_CODES.find(item => {
+    // ⭐ 'fetchAllSearchableLocations'와 동일한 이름 생성 규칙을 적용합니다.
+    // ⭐ 1. 먼저 "2단계" 데이터가 없는 항목은 건너뜁니다.
+        // 이것이 검색 목록을 만들 때의 핵심 조건과 동일합니다.
+        if (!item['2단계']) {
+          return false; // find 메소드에서 false를 반환하면 다음 항목으로 넘어갑니다.
+        }
+
+        // 2. "2단계"가 있는 항목에 대해서만 이름 비교 로직을 수행합니다.
+        const keyName =
+          item['1단계'] === item['2단계']
+            ? item['1단계']
+            : `${item['1단계']} ${item['2단계']}`;
+
+    // ⭐ 이렇게 생성된 이름과 찾으려는 이름을 비교합니다.
+    return keyName === name;
+  });
 };
 
-// ⭐ 1. 이 함수를 새로 추가합니다. (기존 getUniqueLocations와 동일)
 /**
  * 검색 화면에서 사용할 중복 없는 전체 지역 목록을 반환합니다.
  * @returns {{id: number, name: string, gridX: number, gridY: number}[]}
@@ -52,9 +66,16 @@ export const fetchAllSearchableLocations = () => {
       return;
     }
     uniqueKeys.add(key);
+
+    // ⭐ 1단계와 2단계가 같으면 1단계만, 다르면 조합하여 name을 생성합니다.
+    const name =
+      item['1단계'] === item['2단계']
+        ? item['1단계']
+        : `${item['1단계']} ${item['2단계']}`;
+
     locations.push({
       id: item['행정구역코드'],
-      name: `${item['1단계']} ${item['2단계']}`,
+      name: name,
       gridX: item.gridX,
       gridY: item.gridY,
     });

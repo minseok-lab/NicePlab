@@ -201,24 +201,32 @@ const WeatherInfo = ({
       // ListFooterComponent는 목록의 최하단에 한 번만 렌더링될 컴포넌트를 지정합니다.
       ListFooterComponent={
         <>
-          <View style={globalStyles.footerContainer}>
-            <Text style={globalStyles.footerText}>
-              기상정보출처: 기상청, 에어코리아
-            </Text>
-            <Text style={globalStyles.footerText}>
-              날씨 아이콘 : Google Weather API
-            </Text>
-            <Text style={globalStyles.footerText}>
-              업데이트 {lastUpdateTime}
-            </Text>
-            <Text style={globalStyles.footerText}> </Text>
-            <Text style={globalStyles.footerText}>
-              플랩 매치 출처: 플랩풋볼
-            </Text>
-            <Text style={globalStyles.footerText}>
-              Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.
-            </Text>
-            <Text style={globalStyles.footerText}> </Text>
+          <View
+            style={
+              isDropdownOpen
+                ? styles.emptyContainerHidden
+                : styles.emptyContainerVisible
+            }
+          >
+            <View style={globalStyles.footerContainer}>
+              <Text style={globalStyles.footerText}>
+                기상정보출처: 기상청, 에어코리아
+              </Text>
+              <Text style={globalStyles.footerText}>
+                날씨 아이콘 : Google Weather API
+              </Text>
+              <Text style={globalStyles.footerText}>
+                업데이트 {lastUpdateTime}
+              </Text>
+              <Text style={globalStyles.footerText}> </Text>
+              <Text style={globalStyles.footerText}>
+                플랩 매치 출처: 플랩풋볼
+              </Text>
+              <Text style={globalStyles.footerText}>
+                Nice플랩은 플랩풋볼의 API를 활용한 비인가 서비스입니다.
+              </Text>
+              <Text style={globalStyles.footerText}> </Text>
+            </View>
           </View>
         </>
       }

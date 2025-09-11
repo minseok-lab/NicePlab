@@ -19,7 +19,6 @@ import { getBestExerciseTimes } from '../utils/exercise/scoreCalculator';
 // ✨ 변경점: 2. useWeather 훅은 이제 '지휘자' 역할에만 집중합니다.
 export const useWeather = () => {
   const { locationInfo } = useLocation();
-  const { daylightInfo } = useTheme();
   const [weatherData, setWeatherData] = useState(null);
   const [liveData, setLiveData] = useState(null);
   const [plabMatches, setPlabMatches] = useState([]);
@@ -189,7 +188,6 @@ export const useWeather = () => {
     errorMsg,
     lastUpdateTime,
     season,
-    daylightInfo,
     toastMessage,
     refetch,
     clearToast: () => setToastMessage(null),
