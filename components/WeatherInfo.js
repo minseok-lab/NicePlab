@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { fetchPlabMatchDetails } from '../apis';
+import { fetchPlabMatchDetails } from '../api';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   getGlobalStyles,

@@ -11,7 +11,7 @@ import {
   fetchCurrentAirQuality,
   fetchPastTemperature,
   fetchKmaLiveWeather,
-} from '../apis';
+} from '../api';
 
 import { getSeason } from './getSeason';
 import { getDustGradeFromValue } from './formatters/airQualityFormatter';
