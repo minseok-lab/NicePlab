@@ -13,57 +13,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
 // ✨ 1. 기존의 강력한 모듈들을 그대로 가져옵니다.
-import { getUniqueLocations } from '../utils/searchLocationUtils'; // 검색용 유틸리티
+import { fetchAllSearchableLocations } from '../providers/locationProvider'; // 검색용 유틸리티
 import { useLocation } from '../contexts/LocationContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getGlobalStyles, PALETTE } from '../styles';
 import { getSearchScreenStyles } from '../styles/searchScreen.style';
 import LoadingIndicator from '../components/LoadingIndicator';
-
-/**
- * @description 선택된 지역의 날씨 결과를 보여주는 자식 컴포넌트입니다.
- * 이 컴포넌트는 locationName prop이 있을 때만 렌더링되며,
- * 렌더링되는 시점에 useWeather 훅을 호출하여 데이터 로딩을 시작합니다.
- */
-/*
-const SearchResult = ({ locationName, onBack }) => {
-  const { state, colors } = useTheme();
-  const theme = PALETTE.themes[state];
-  const globalStyles = getGlobalStyles(theme);
-  const styles = getSearchScreenStyles(theme);
-
-  // ✨ 2. useWeather 훅에 선택된 지역 이름을 전달하여 재사용합니다.
-  const weatherHookData = useWeather(locationName);
-
-  return (
-    <LinearGradient colors={colors} style={{ flex: 1 }}>
-      <SafeAreaView style={globalStyles.container}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← 다른 지역 검색하기</Text>
-        </TouchableOpacity>
-
-        {/* ✨ 3. WeatherInfo 컴포넌트에 useWeather 훅의 결과를 그대로 전달합니다.
-        로딩, 에러, 데이터 표시 등 모든 UI/UX가 '내 위치' 화면과 동일해집니다.
-      }
-        <WeatherInfo
-          // useWeather가 반환하는 모든 props를 그대로 넘겨줍니다.
-          finalRecommendedSlots={weatherHookData.finalRecommendedSlots}
-          liveData={weatherHookData.liveData}
-          daylightInfo={weatherHookData.daylightInfo}
-          lastUpdateTime={weatherHookData.lastUpdateTime}
-          onRefresh={weatherHookData.refetch}
-          isRefreshing={weatherHookData.isLoading}
-          genderFilter={weatherHookData.genderFilter}
-          setGenderFilter={weatherHookData.setGenderFilter}
-          levelFilter={weatherHookData.levelFilter}
-          setLevelFilter={weatherHookData.setLevelFilter}
-          timezone={weatherHookData.timezone}
-        />
-      </SafeAreaView>
-    </LinearGradient>
-  );
-};
-*/
 
 /**
  * @description 지역 검색을 담당하는 메인 스크린 컴포넌트입니다.
@@ -84,7 +39,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     // 최초 렌더링 시, 검색할 지역 목록을 불러옵니다.
-    const locations = getUniqueLocations();
+    const locations = fetchAllSearchableLocations();
     setAllLocations(locations);
   }, []);
 

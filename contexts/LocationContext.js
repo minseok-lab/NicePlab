@@ -1,32 +1,27 @@
 // contexts/LocationContext.js
 
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import {
-  getWeatherLocationInfo,
-  getDefaultRegionInfo,
-} from '../utils/locationResolver';
+import { getLocationInfo, LOCATION_TYPE } from '../services/LocationService';
 
 const LocationContext = createContext(null);
 
 export const LocationProvider = ({ children }) => {
-  const [locationName, setLocationName] = useState('내 위치'); // 위치 이름 상태
+  // ⭐ 2. '내 위치' 문자열 대신 LOCATION_TYPE.GPS 상수를 사용합니다.
+  const [locationName, setLocationName] = useState(LOCATION_TYPE.GPS);
   const [locationInfo, setLocationInfo] = useState(null); // 위치 상세 정보 상태
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchLocationData = async () => {
       setIsLoading(true);
-      try {
-        const info =
-          (await getWeatherLocationInfo(locationName)) ||
-          getDefaultRegionInfo();
-        setLocationInfo(info);
-      } catch (error) {
-        console.error('LocationContext에서 위치 정보 로드 실패:', error);
-        setLocationInfo(getDefaultRegionInfo()); // 실패 시 기본 정보로 설정
-      } finally {
-        setIsLoading(false);
-      }
+
+      // ⭐ 3. getLocationInfo 서비스 함수를 호출합니다.
+      // 서비스 내부에서 에러 처리 및 기본값 반환을 모두 처리하므로,
+      // Context에서는 그 결과를 받아서 상태에 반영하기만 하면 됩니다.
+      const info = await getLocationInfo(locationName);
+      setLocationInfo(info);
+
+      setIsLoading(false);
     };
 
     fetchLocationData();
@@ -39,6 +34,7 @@ export const LocationProvider = ({ children }) => {
       isLoading,
       setLocationName, // 외부에서 위치를 변경할 수 있도록 함수를 제공
     }),
+    // locationInfo나 isLoading 상태가 변경될 때만 value 객체를 새로 생성합니다.
     [locationInfo, isLoading],
   );
 
