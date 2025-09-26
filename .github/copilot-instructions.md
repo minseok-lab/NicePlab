@@ -1,4 +1,5 @@
-# NicePlab
+
+# Copilot 지침서 (NicePlab)
 
 ## 개요
 NicePlab은 위치와 날씨 데이터를 바탕으로 풋살하기 좋은 시간과 장소를 추천하고, 해당 조건에 맞는 인근 '플랩풋볼' 매치를 보여주는 React Native 앱입니다. 외부 API와 연동하여 다양한 정보를 제공합니다.
